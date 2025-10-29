@@ -1,29 +1,42 @@
 import { useState, useEffect } from 'react';
-import { supabase, TemperatureZone, TemperatureItem, CleaningTask, Profile } from '../../lib/supabase';
-import { Settings, Plus, Edit2, Trash2, Save, X, Users } from 'lucide-react';
+import { supabase, Zone, Equipment, CleaningTask, Employee } from '../../lib/supabase';
+import { Settings, Plus, Edit2, Trash2, Save, X, Users, Thermometer, Briefcase } from 'lucide-react';
 
 export function SettingsModule() {
-  const [zones, setZones] = useState<(TemperatureZone & { items: TemperatureItem[] })[]>([]);
+  const [zones, setZones] = useState<(Zone & { equipment: Equipment[] })[]>([]);
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
-  const [users, setUsers] = useState<Profile[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [addingZone, setAddingZone] = useState(false);
+  const [newZoneName, setNewZoneName] = useState('');
+  const [newZoneDescription, setNewZoneDescription] = useState('');
+
   const [editingZone, setEditingZone] = useState<string | null>(null);
   const [editingZoneName, setEditingZoneName] = useState('');
-  const [editingZoneMinTemp, setEditingZoneMinTemp] = useState('');
-  const [editingZoneMaxTemp, setEditingZoneMaxTemp] = useState('');
-  const [editingItem, setEditingItem] = useState<string | null>(null);
-  const [editingTask, setEditingTask] = useState<string | null>(null);
-  const [newItemZoneId, setNewItemZoneId] = useState<string | null>(null);
-  const [newItemName, setNewItemName] = useState('');
-  const [addingUser, setAddingUser] = useState(false);
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserRole, setNewUserRole] = useState<'staff' | 'supervisor' | 'admin'>('staff');
-  const [autoReportEnabled, setAutoReportEnabled] = useState(false);
-  const [savingAutoReport, setSavingAutoReport] = useState(false);
+  const [editingZoneDescription, setEditingZoneDescription] = useState('');
+
+  const [addingEquipment, setAddingEquipment] = useState<string | null>(null);
+  const [newEquipmentName, setNewEquipmentName] = useState('');
+  const [newEquipmentType, setNewEquipmentType] = useState<'refrigerator' | 'freezer' | 'other'>('refrigerator');
+  const [newEquipmentMinTemp, setNewEquipmentMinTemp] = useState('-18');
+  const [newEquipmentMaxTemp, setNewEquipmentMaxTemp] = useState('4');
+
+  const [editingEquipment, setEditingEquipment] = useState<string | null>(null);
+  const [editingEquipmentName, setEditingEquipmentName] = useState('');
+  const [editingEquipmentType, setEditingEquipmentType] = useState<'refrigerator' | 'freezer' | 'other'>('refrigerator');
+  const [editingEquipmentMinTemp, setEditingEquipmentMinTemp] = useState('');
+  const [editingEquipmentMaxTemp, setEditingEquipmentMaxTemp] = useState('');
+
+  const [addingEmployee, setAddingEmployee] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [newEmployeeRole, setNewEmployeeRole] = useState('staff');
+
   const [addingTask, setAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskFrequency, setNewTaskFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [newTaskZoneId, setNewTaskZoneId] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -31,62 +44,43 @@ export function SettingsModule() {
 
   const loadData = async () => {
     try {
-      const { data: zonesData, error: zonesError } = await supabase
-        .from('temperature_zones')
+      const { data: zonesData } = await supabase
+        .from('zones')
         .select('*')
-        .order('sort_order');
-
-      console.log('Settings - Zones data:', zonesData, 'Error:', zonesError);
+        .order('name');
 
       if (zonesData) {
-        const zonesWithItems = await Promise.all(
+        const zonesWithEquipment = await Promise.all(
           zonesData.map(async (zone) => {
-            const { data: items, error: itemsError } = await supabase
-              .from('temperature_items')
+            const { data: equipmentItems } = await supabase
+              .from('equipment')
               .select('*')
               .eq('zone_id', zone.id)
-              .order('sort_order');
+              .order('name');
 
-            console.log(`Settings - Items for zone ${zone.name_no}:`, items, 'Error:', itemsError);
-
-            return { ...zone, items: items || [] };
+            return { ...zone, equipment: equipmentItems || [] };
           })
         );
 
-        console.log('Settings - Final zones:', zonesWithItems);
-        setZones(zonesWithItems);
+        setZones(zonesWithEquipment);
       }
 
-      const { data: tasksData, error: tasksError } = await supabase
+      const { data: tasksData } = await supabase
         .from('cleaning_tasks')
         .select('*')
-        .order('sort_order');
-
-      console.log('Settings - Tasks data:', tasksData, 'Error:', tasksError);
+        .order('task_name');
 
       if (tasksData) {
         setTasks(tasksData);
       }
 
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
+      const { data: employeesData } = await supabase
+        .from('employees')
         .select('*')
-        .order('created_at');
+        .order('name');
 
-      console.log('Settings - Users data:', usersData, 'Error:', usersError);
-
-      if (usersData) {
-        setUsers(usersData);
-      }
-
-      const { data: autoReportSettings } = await supabase
-        .from('system_settings')
-        .select('setting_value')
-        .eq('setting_key', 'auto_generate_daily_report')
-        .single();
-
-      if (autoReportSettings) {
-        setAutoReportEnabled(autoReportSettings.setting_value?.enabled || false);
+      if (employeesData) {
+        setEmployees(employeesData);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -95,27 +89,46 @@ export function SettingsModule() {
     }
   };
 
-  const updateZone = async (zoneId: string) => {
+  const addZone = async () => {
+    if (!newZoneName.trim()) {
+      alert('Vennligst skriv inn et navn for sonen');
+      return;
+    }
+
     try {
-      const minTemp = parseFloat(editingZoneMinTemp);
-      const maxTemp = parseFloat(editingZoneMaxTemp);
-
-      if (isNaN(minTemp) || isNaN(maxTemp)) {
-        alert('Vennligst skriv inn gyldige temperaturer');
-        return;
-      }
-
-      if (minTemp >= maxTemp) {
-        alert('Minimum temperatur må være lavere enn maksimum temperatur');
-        return;
-      }
-
       const { data } = await supabase
-        .from('temperature_zones')
+        .from('zones')
+        .insert({
+          name: newZoneName,
+          description: newZoneDescription,
+        })
+        .select()
+        .single();
+
+      if (data) {
+        setZones([...zones, { ...data, equipment: [] }]);
+        setAddingZone(false);
+        setNewZoneName('');
+        setNewZoneDescription('');
+      }
+    } catch (error) {
+      console.error('Error adding zone:', error);
+      alert('Det oppstod en feil ved opprettelse av sone');
+    }
+  };
+
+  const updateZone = async (zoneId: string) => {
+    if (!editingZoneName.trim()) {
+      alert('Vennligst skriv inn et navn for sonen');
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from('zones')
         .update({
-          name_no: editingZoneName,
-          min_temp: minTemp,
-          max_temp: maxTemp,
+          name: editingZoneName,
+          description: editingZoneDescription,
         })
         .eq('id', zoneId)
         .select()
@@ -125,8 +138,7 @@ export function SettingsModule() {
         setZones(zones.map(z => z.id === zoneId ? { ...z, ...data } : z));
         setEditingZone(null);
         setEditingZoneName('');
-        setEditingZoneMinTemp('');
-        setEditingZoneMaxTemp('');
+        setEditingZoneDescription('');
       }
     } catch (error) {
       console.error('Error updating zone:', error);
@@ -134,123 +146,154 @@ export function SettingsModule() {
   };
 
   const deleteZone = async (zoneId: string) => {
-    if (!confirm('Er du sikker på at du vil slette denne sonen? Alle elementer vil også bli slettet.')) return;
+    if (!confirm('Er du sikker på at du vil slette denne sonen?')) return;
 
     try {
-      await supabase.from('temperature_zones').delete().eq('id', zoneId);
+      await supabase.from('zones').delete().eq('id', zoneId);
       setZones(zones.filter(z => z.id !== zoneId));
     } catch (error) {
       console.error('Error deleting zone:', error);
     }
   };
 
-  const addItem = async (zoneId: string) => {
-    if (!newItemName.trim()) {
-      alert('Vennligst skriv inn et navn for elementet');
+  const addEquipment = async (zoneId: string) => {
+    if (!newEquipmentName.trim()) {
+      alert('Vennligst skriv inn et navn for utstyret');
+      return;
+    }
+
+    const minTemp = parseFloat(newEquipmentMinTemp);
+    const maxTemp = parseFloat(newEquipmentMaxTemp);
+
+    if (isNaN(minTemp) || isNaN(maxTemp)) {
+      alert('Vennligst skriv inn gyldige temperaturer');
       return;
     }
 
     try {
       const { data } = await supabase
-        .from('temperature_items')
+        .from('equipment')
         .insert({
+          name: newEquipmentName,
+          type: newEquipmentType,
           zone_id: zoneId,
-          name_no: newItemName,
-          sort_order: zones.find(z => z.id === zoneId)?.items.length || 0,
+          min_temp: minTemp,
+          max_temp: maxTemp,
+          active: true,
         })
         .select()
         .single();
 
       if (data) {
         setZones(zones.map(z =>
-          z.id === zoneId ? { ...z, items: [...z.items, data] } : z
+          z.id === zoneId
+            ? { ...z, equipment: [...z.equipment, data] }
+            : z
         ));
-        setNewItemZoneId(null);
-        setNewItemName('');
+        setAddingEquipment(null);
+        setNewEquipmentName('');
+        setNewEquipmentType('refrigerator');
+        setNewEquipmentMinTemp('-18');
+        setNewEquipmentMaxTemp('4');
       }
     } catch (error) {
-      console.error('Error adding item:', error);
+      console.error('Error adding equipment:', error);
+      alert('Det oppstod en feil ved opprettelse av utstyr');
     }
   };
 
-  const updateItem = async (itemId: string, name: string) => {
+  const updateEquipment = async (equipmentId: string, zoneId: string) => {
+    if (!editingEquipmentName.trim()) {
+      alert('Vennligst skriv inn et navn for utstyret');
+      return;
+    }
+
+    const minTemp = parseFloat(editingEquipmentMinTemp);
+    const maxTemp = parseFloat(editingEquipmentMaxTemp);
+
+    if (isNaN(minTemp) || isNaN(maxTemp)) {
+      alert('Vennligst skriv inn gyldige temperaturer');
+      return;
+    }
+
     try {
       const { data } = await supabase
-        .from('temperature_items')
-        .update({ name_no: name })
-        .eq('id', itemId)
+        .from('equipment')
+        .update({
+          name: editingEquipmentName,
+          type: editingEquipmentType,
+          min_temp: minTemp,
+          max_temp: maxTemp,
+        })
+        .eq('id', equipmentId)
         .select()
         .single();
 
       if (data) {
-        setZones(zones.map(z => ({
-          ...z,
-          items: z.items.map(i => i.id === itemId ? data : i)
-        })));
-        setEditingItem(null);
+        setZones(zones.map(z =>
+          z.id === zoneId
+            ? { ...z, equipment: z.equipment.map(e => e.id === equipmentId ? data : e) }
+            : z
+        ));
+        setEditingEquipment(null);
       }
     } catch (error) {
-      console.error('Error updating item:', error);
+      console.error('Error updating equipment:', error);
     }
   };
 
-  const deleteItem = async (itemId: string, zoneId: string) => {
-    if (!confirm('Er du sikker på at du vil slette dette elementet?')) return;
+  const deleteEquipment = async (equipmentId: string, zoneId: string) => {
+    if (!confirm('Er du sikker på at du vil slette dette utstyret?')) return;
 
     try {
-      await supabase.from('temperature_items').delete().eq('id', itemId);
+      await supabase.from('equipment').delete().eq('id', equipmentId);
       setZones(zones.map(z =>
-        z.id === zoneId ? { ...z, items: z.items.filter(i => i.id !== itemId) } : z
+        z.id === zoneId
+          ? { ...z, equipment: z.equipment.filter(e => e.id !== equipmentId) }
+          : z
       ));
     } catch (error) {
-      console.error('Error deleting item:', error);
+      console.error('Error deleting equipment:', error);
     }
   };
 
-  const updateTask = async (taskId: string, name: string) => {
+  const addEmployee = async () => {
+    if (!newEmployeeName.trim()) {
+      alert('Vennligst skriv inn et navn for ansatt');
+      return;
+    }
+
     try {
       const { data } = await supabase
-        .from('cleaning_tasks')
-        .update({ name_no: name })
-        .eq('id', taskId)
+        .from('employees')
+        .insert({
+          name: newEmployeeName,
+          role: newEmployeeRole,
+          active: true,
+        })
         .select()
         .single();
 
       if (data) {
-        setTasks(tasks.map(t => t.id === taskId ? data : t));
-        setEditingTask(null);
+        setEmployees([...employees, data]);
+        setAddingEmployee(false);
+        setNewEmployeeName('');
+        setNewEmployeeRole('staff');
       }
     } catch (error) {
-      console.error('Error updating task:', error);
+      console.error('Error adding employee:', error);
+      alert('Det oppstod en feil ved opprettelse av ansatt');
     }
   };
 
-  const toggleTaskActive = async (taskId: string, isActive: boolean) => {
-    try {
-      const { data } = await supabase
-        .from('cleaning_tasks')
-        .update({ is_active: !isActive })
-        .eq('id', taskId)
-        .select()
-        .single();
-
-      if (data) {
-        setTasks(tasks.map(t => t.id === taskId ? data : t));
-      }
-    } catch (error) {
-      console.error('Error toggling task:', error);
-    }
-  };
-
-  const deleteTask = async (taskId: string) => {
-    if (!confirm('Er du sikker på at du vil slette denne oppgaven? Alle tilhørende logger vil også bli slettet.')) return;
+  const deleteEmployee = async (employeeId: string) => {
+    if (!confirm('Er du sikker på at du vil slette denne ansatte?')) return;
 
     try {
-      await supabase.from('cleaning_tasks').delete().eq('id', taskId);
-      setTasks(tasks.filter(t => t.id !== taskId));
+      await supabase.from('employees').delete().eq('id', employeeId);
+      setEmployees(employees.filter(e => e.id !== employeeId));
     } catch (error) {
-      console.error('Error deleting task:', error);
-      alert('Kunne ikke slette oppgave');
+      console.error('Error deleting employee:', error);
     }
   };
 
@@ -264,11 +307,11 @@ export function SettingsModule() {
       const { data } = await supabase
         .from('cleaning_tasks')
         .insert({
-          name_no: newTaskName,
+          task_name: newTaskName,
           description: newTaskDescription,
           frequency: newTaskFrequency,
-          is_active: true,
-          sort_order: tasks.length,
+          zone_id: newTaskZoneId || null,
+          active: true,
         })
         .select()
         .single();
@@ -279,87 +322,22 @@ export function SettingsModule() {
         setNewTaskName('');
         setNewTaskDescription('');
         setNewTaskFrequency('daily');
+        setNewTaskZoneId('');
       }
     } catch (error) {
       console.error('Error adding task:', error);
-      alert('Kunne ikke legge til oppgave');
+      alert('Det oppstod en feil ved opprettelse av oppgave');
     }
   };
 
-  const toggleAutoReport = async (enabled: boolean) => {
-    setSavingAutoReport(true);
-    try {
-      const { error } = await supabase
-        .from('system_settings')
-        .update({
-          setting_value: { enabled, generation_time: '23:00' }
-        })
-        .eq('setting_key', 'auto_generate_daily_report');
-
-      if (!error) {
-        setAutoReportEnabled(enabled);
-      }
-    } catch (error) {
-      console.error('Error updating auto-report setting:', error);
-    } finally {
-      setSavingAutoReport(false);
-    }
-  };
-
-  const addUser = async () => {
-    if (!newUserName.trim()) {
-      alert('Vennligst skriv inn et navn');
-      return;
-    }
+  const deleteTask = async (taskId: string) => {
+    if (!confirm('Er du sikker på at du vil slette denne oppgaven?')) return;
 
     try {
-      const { data } = await supabase
-        .from('profiles')
-        .insert({
-          full_name: newUserName,
-          role: newUserRole,
-        })
-        .select()
-        .single();
-
-      if (data) {
-        setUsers([...users, data]);
-        setAddingUser(false);
-        setNewUserName('');
-        setNewUserRole('staff');
-      }
+      await supabase.from('cleaning_tasks').delete().eq('id', taskId);
+      setTasks(tasks.filter(t => t.id !== taskId));
     } catch (error) {
-      console.error('Error adding user:', error);
-      alert('Kunne ikke legge til bruker');
-    }
-  };
-
-  const deleteUser = async (userId: string) => {
-    if (!confirm('Er du sikker på at du vil slette denne brukeren?')) return;
-
-    try {
-      await supabase.from('profiles').delete().eq('id', userId);
-      setUsers(users.filter(u => u.id !== userId));
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Kunne ikke slette bruker');
-    }
-  };
-
-  const updateUserRole = async (userId: string, role: string) => {
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (data) {
-        setUsers(users.map(u => u.id === userId ? data : u));
-      }
-    } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error('Error deleting task:', error);
     }
   };
 
@@ -373,234 +351,300 @@ export function SettingsModule() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-slate-600 rounded-xl flex items-center justify-center">
           <Settings className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Systeminnstillinger</h2>
-          <p className="text-slate-600">Administrer temperatursoner, oppgaver og brukere</p>
+          <h2 className="text-2xl font-bold text-slate-900">Innstillinger</h2>
+          <p className="text-slate-600">Administrer soner, utstyr og ansatte</p>
         </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-violet-50 px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">Automatisk Daglig Rapport</h3>
-        </div>
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h4 className="font-medium text-slate-900 mb-1">Aktiver automatisk rapportgenerering</h4>
-              <p className="text-sm text-slate-600">
-                Systemet vil automatisk generere en daglig rapport kl. 23:00 hvis ingen manuell rapport er opprettet
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer ml-4">
-              <input
-                type="checkbox"
-                checked={autoReportEnabled}
-                onChange={(e) => toggleAutoReport(e.target.checked)}
-                disabled={savingAutoReport}
-                className="sr-only peer"
-              />
-              <div className="w-14 h-7 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-violet-600"></div>
-            </label>
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Thermometer className="w-5 h-5 text-slate-600" />
+            <h3 className="font-semibold text-slate-900">Soner og Utstyr</h3>
           </div>
-          {savingAutoReport && (
-            <div className="mt-3 text-sm text-slate-600">Lagrer...</div>
-          )}
-          {autoReportEnabled && (
-            <div className="mt-4 p-4 bg-violet-50 border border-violet-200 rounded-lg">
-              <p className="text-sm text-violet-900">
-                <strong>Aktivert:</strong> Daglige rapporter vil genereres automatisk hver kveld kl. 23:00
-              </p>
+          <button
+            onClick={() => setAddingZone(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Legg til sone
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {addingZone && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-slate-900 mb-3">Ny sone</h4>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={newZoneName}
+                  onChange={(e) => setNewZoneName(e.target.value)}
+                  placeholder="Sonenavn (f.eks. Kjøkken, Lager)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="text"
+                  value={newZoneDescription}
+                  onChange={(e) => setNewZoneDescription(e.target.value)}
+                  placeholder="Beskrivelse (valgfritt)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={addZone}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Lagre
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAddingZone(false);
+                      setNewZoneName('');
+                      setNewZoneDescription('');
+                    }}
+                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-blue-50 px-6 py-4 border-b border-slate-200">
-          <h3 className="font-semibold text-blue-900">Temperatursoner og elementer</h3>
-        </div>
-        <div className="p-6 space-y-6">
+          {zones.length === 0 && !addingZone && (
+            <div className="text-center py-8 text-slate-500">
+              Ingen soner ennå. Klikk "Legg til sone" for å komme i gang.
+            </div>
+          )}
+
           {zones.map((zone) => (
             <div key={zone.id} className="border border-slate-200 rounded-lg overflow-hidden">
-              <div className="bg-slate-50 px-4 py-3">
+              <div className="bg-slate-50 px-4 py-3 flex items-center justify-between">
                 {editingZone === zone.id ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-slate-700 w-24">Navn:</label>
-                      <input
-                        type="text"
-                        value={editingZoneName}
-                        onChange={(e) => setEditingZoneName(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Sone navn"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-slate-700 w-24">Min temp:</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={editingZoneMinTemp}
-                        onChange={(e) => setEditingZoneMinTemp(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="°C"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-slate-700 w-24">Maks temp:</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={editingZoneMaxTemp}
-                        onChange={(e) => setEditingZoneMaxTemp(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="°C"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 justify-end">
-                      <button
-                        onClick={() => {
-                          setEditingZone(null);
-                          setEditingZoneName('');
-                          setEditingZoneMinTemp('');
-                          setEditingZoneMaxTemp('');
-                        }}
-                        className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
-                      >
-                        Avbryt
-                      </button>
-                      <button
-                        onClick={() => updateZone(zone.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                      >
-                        <Save className="w-4 h-4" />
-                        Lagre
-                      </button>
-                    </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingZoneName}
+                      onChange={(e) => setEditingZoneName(e.target.value)}
+                      className="flex-1 px-3 py-1 border border-slate-300 rounded"
+                    />
+                    <input
+                      type="text"
+                      value={editingZoneDescription}
+                      onChange={(e) => setEditingZoneDescription(e.target.value)}
+                      placeholder="Beskrivelse"
+                      className="flex-1 px-3 py-1 border border-slate-300 rounded"
+                    />
+                    <button
+                      onClick={() => updateZone(zone.id)}
+                      className="p-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingZone(null)}
+                      className="p-2 bg-slate-300 text-slate-700 rounded hover:bg-slate-400"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-lg">{zone.name_no}</span>
-                      <span className="text-sm text-slate-600 bg-slate-200 px-3 py-1 rounded-full">
-                        {zone.min_temp}°C - {zone.max_temp}°C
-                      </span>
+                  <>
+                    <div>
+                      <h4 className="font-semibold text-slate-900">{zone.name}</h4>
+                      {zone.description && (
+                        <p className="text-sm text-slate-600">{zone.description}</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setAddingEquipment(zone.id)}
+                        className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-700 text-sm flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Utstyr
+                      </button>
                       <button
                         onClick={() => {
                           setEditingZone(zone.id);
-                          setEditingZoneName(zone.name_no);
-                          setEditingZoneMinTemp(zone.min_temp.toString());
-                          setEditingZoneMaxTemp(zone.max_temp.toString());
+                          setEditingZoneName(zone.name);
+                          setEditingZoneDescription(zone.description);
                         }}
-                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                        title="Rediger sone"
+                        className="p-2 hover:bg-slate-200 rounded"
                       >
-                        <Edit2 className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4 text-slate-600" />
                       </button>
                       <button
                         onClick={() => deleteZone(zone.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Slett sone"
+                        className="p-2 hover:bg-red-100 rounded"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
               <div className="p-4 space-y-2">
-                {zone.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded">
-                    {editingItem === item.id ? (
-                      <div className="flex items-center gap-2 flex-1">
+                {addingEquipment === zone.id && (
+                  <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-3 mb-2">
+                    <h5 className="font-semibold text-slate-900 mb-2 text-sm">Nytt utstyr</h5>
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={newEquipmentName}
+                        onChange={(e) => setNewEquipmentName(e.target.value)}
+                        placeholder="Utstyrsnavn (f.eks. Kjøleskap 1)"
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-sm"
+                      />
+                      <select
+                        value={newEquipmentType}
+                        onChange={(e) => setNewEquipmentType(e.target.value as any)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-sm"
+                      >
+                        <option value="refrigerator">Kjøleskap</option>
+                        <option value="freezer">Fryser</option>
+                        <option value="other">Annet</option>
+                      </select>
+                      <div className="grid grid-cols-2 gap-2">
                         <input
-                          type="text"
-                          defaultValue={item.name_no}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              updateItem(item.id, e.currentTarget.value);
-                            }
-                          }}
-                          className="px-3 py-1 border border-slate-300 rounded flex-1"
-                          autoFocus
+                          type="number"
+                          step="0.1"
+                          value={newEquipmentMinTemp}
+                          onChange={(e) => setNewEquipmentMinTemp(e.target.value)}
+                          placeholder="Min temp (°C)"
+                          className="px-3 py-2 border border-slate-300 rounded text-sm"
                         />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={newEquipmentMaxTemp}
+                          onChange={(e) => setNewEquipmentMaxTemp(e.target.value)}
+                          placeholder="Max temp (°C)"
+                          className="px-3 py-2 border border-slate-300 rounded text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => setEditingItem(null)}
-                          className="p-1 hover:bg-slate-200 rounded"
+                          onClick={() => addEquipment(zone.id)}
+                          className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-700 text-sm"
                         >
-                          <X className="w-4 h-4" />
+                          Lagre
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAddingEquipment(null);
+                            setNewEquipmentName('');
+                            setNewEquipmentType('refrigerator');
+                            setNewEquipmentMinTemp('-18');
+                            setNewEquipmentMaxTemp('4');
+                          }}
+                          className="px-3 py-1 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 text-sm"
+                        >
+                          Avbryt
                         </button>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {zone.equipment.length === 0 && addingEquipment !== zone.id && (
+                  <div className="text-sm text-slate-500 text-center py-2">
+                    Ingen utstyr i denne sonen
+                  </div>
+                )}
+
+                {zone.equipment.map((equipment) => (
+                  <div key={equipment.id} className="flex items-center justify-between bg-slate-50 p-3 rounded">
+                    {editingEquipment === equipment.id ? (
+                      <div className="flex-1 grid grid-cols-4 gap-2">
+                        <input
+                          type="text"
+                          value={editingEquipmentName}
+                          onChange={(e) => setEditingEquipmentName(e.target.value)}
+                          className="px-2 py-1 border border-slate-300 rounded text-sm"
+                        />
+                        <select
+                          value={editingEquipmentType}
+                          onChange={(e) => setEditingEquipmentType(e.target.value as any)}
+                          className="px-2 py-1 border border-slate-300 rounded text-sm"
+                        >
+                          <option value="refrigerator">Kjøleskap</option>
+                          <option value="freezer">Fryser</option>
+                          <option value="other">Annet</option>
+                        </select>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={editingEquipmentMinTemp}
+                          onChange={(e) => setEditingEquipmentMinTemp(e.target.value)}
+                          className="px-2 py-1 border border-slate-300 rounded text-sm"
+                        />
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={editingEquipmentMaxTemp}
+                          onChange={(e) => setEditingEquipmentMaxTemp(e.target.value)}
+                          className="px-2 py-1 border border-slate-300 rounded text-sm"
+                        />
+                      </div>
                     ) : (
-                      <>
-                        <span className="text-slate-700">{item.name_no}</span>
-                        <div className="flex items-center gap-1">
+                      <div className="flex-1">
+                        <div className="font-medium text-slate-900 text-sm">{equipment.name}</div>
+                        <div className="text-xs text-slate-600">
+                          {equipment.type === 'refrigerator' ? 'Kjøleskap' : equipment.type === 'freezer' ? 'Fryser' : 'Annet'} -
+                          {' '}{equipment.min_temp}°C til {equipment.max_temp}°C
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      {editingEquipment === equipment.id ? (
+                        <>
                           <button
-                            onClick={() => setEditingItem(item.id)}
+                            onClick={() => updateEquipment(equipment.id, zone.id)}
+                            className="p-1 bg-green-600 text-white rounded hover:bg-green-700"
+                          >
+                            <Save className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => setEditingEquipment(null)}
+                            className="p-1 bg-slate-300 text-slate-700 rounded hover:bg-slate-400"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingEquipment(equipment.id);
+                              setEditingEquipmentName(equipment.name);
+                              setEditingEquipmentType(equipment.type);
+                              setEditingEquipmentMinTemp(equipment.min_temp.toString());
+                              setEditingEquipmentMaxTemp(equipment.max_temp.toString());
+                            }}
                             className="p-1 hover:bg-slate-200 rounded"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <Edit2 className="w-3 h-3 text-slate-600" />
                           </button>
                           <button
-                            onClick={() => deleteItem(item.id, zone.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            onClick={() => deleteEquipment(equipment.id, zone.id)}
+                            className="p-1 hover:bg-red-100 rounded"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3 h-3 text-red-600" />
                           </button>
-                        </div>
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
-
-                {newItemZoneId === zone.id ? (
-                  <div className="flex items-center gap-2 pt-2">
-                    <input
-                      type="text"
-                      value={newItemName}
-                      onChange={(e) => setNewItemName(e.target.value)}
-                      placeholder="Nytt element navn"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          addItem(zone.id);
-                        }
-                      }}
-                      className="px-3 py-2 border border-slate-300 rounded-lg flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => {
-                        setNewItemZoneId(null);
-                        setNewItemName('');
-                      }}
-                      className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => addItem(zone.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Legg til
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setNewItemZoneId(zone.id)}
-                    className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Legg til nytt element
-                  </button>
-                )}
               </div>
             </div>
           ))}
@@ -608,248 +652,186 @@ export function SettingsModule() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-cyan-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="font-semibold text-cyan-900">Rengjøringsoppgaver</h3>
-          {!addingTask && (
-            <button
-              onClick={() => setAddingTask(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Ny oppgave
-            </button>
-          )}
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-slate-600" />
+            <h3 className="font-semibold text-slate-900">Ansatte</h3>
+          </div>
+          <button
+            onClick={() => setAddingEmployee(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Legg til ansatt
+          </button>
         </div>
-        <div className="p-6">
-          {addingTask && (
-            <div className="mb-6 p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+
+        <div className="p-6 space-y-3">
+          {addingEmployee && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-3">
+              <h4 className="font-semibold text-slate-900 mb-3">Ny ansatt</h4>
               <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Oppgavenavn</label>
-                  <input
-                    type="text"
-                    value={newTaskName}
-                    onChange={(e) => setNewTaskName(e.target.value)}
-                    placeholder="F.eks. Vaske gulv"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Beskrivelse (valgfri)</label>
-                  <input
-                    type="text"
-                    value={newTaskDescription}
-                    onChange={(e) => setNewTaskDescription(e.target.value)}
-                    placeholder="Kort beskrivelse av oppgaven"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Frekvens</label>
-                  <select
-                    value={newTaskFrequency}
-                    onChange={(e) => setNewTaskFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                <input
+                  type="text"
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  placeholder="Navn"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={newEmployeeRole}
+                  onChange={(e) => setNewEmployeeRole(e.target.value)}
+                  placeholder="Rolle (f.eks. Kokk, Servitør)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={addEmployee}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   >
-                    <option value="daily">Daglig</option>
-                    <option value="weekly">Ukentlig</option>
-                    <option value="monthly">Månedlig</option>
-                  </select>
+                    Lagre
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAddingEmployee(false);
+                      setNewEmployeeName('');
+                      setNewEmployeeRole('staff');
+                    }}
+                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                  >
+                    Avbryt
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 justify-end">
+              </div>
+            </div>
+          )}
+
+          {employees.length === 0 && !addingEmployee && (
+            <div className="text-center py-8 text-slate-500">
+              Ingen ansatte ennå. Klikk "Legg til ansatt" for å komme i gang.
+            </div>
+          )}
+
+          {employees.map((employee) => (
+            <div key={employee.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-lg">
+              <div>
+                <div className="font-semibold text-slate-900">{employee.name}</div>
+                <div className="text-sm text-slate-600">{employee.role}</div>
+              </div>
+              <button
+                onClick={() => deleteEmployee(employee.id)}
+                className="p-2 hover:bg-red-100 rounded"
+              >
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-slate-600" />
+            <h3 className="font-semibold text-slate-900">Rengjøringsoppgaver</h3>
+          </div>
+          <button
+            onClick={() => setAddingTask(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Legg til oppgave
+          </button>
+        </div>
+
+        <div className="p-6 space-y-3">
+          {addingTask && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-3">
+              <h4 className="font-semibold text-slate-900 mb-3">Ny oppgave</h4>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={newTaskName}
+                  onChange={(e) => setNewTaskName(e.target.value)}
+                  placeholder="Oppgavenavn"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                />
+                <input
+                  type="text"
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  placeholder="Beskrivelse (valgfritt)"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                />
+                <select
+                  value={newTaskZoneId}
+                  onChange={(e) => setNewTaskZoneId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                >
+                  <option value="">Ingen sone</option>
+                  {zones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>{zone.name}</option>
+                  ))}
+                </select>
+                <select
+                  value={newTaskFrequency}
+                  onChange={(e) => setNewTaskFrequency(e.target.value as any)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                >
+                  <option value="daily">Daglig</option>
+                  <option value="weekly">Ukentlig</option>
+                  <option value="monthly">Månedlig</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    onClick={addTask}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    Lagre
+                  </button>
                   <button
                     onClick={() => {
                       setAddingTask(false);
                       setNewTaskName('');
                       setNewTaskDescription('');
                       setNewTaskFrequency('daily');
+                      setNewTaskZoneId('');
                     }}
-                    className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
                   >
                     Avbryt
-                  </button>
-                  <button
-                    onClick={addTask}
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Legg til
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="space-y-2">
-            {tasks.map((task) => (
-              <div key={task.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg">
-                {editingTask === task.id ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <input
-                      type="text"
-                      defaultValue={task.name_no}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          updateTask(task.id, e.currentTarget.value);
-                        }
-                      }}
-                      className="px-3 py-2 border border-slate-300 rounded flex-1"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => setEditingTask(null)}
-                      className="p-2 hover:bg-slate-200 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 flex-1">
-                      <span className={task.is_active ? 'text-slate-900' : 'text-slate-400 line-through'}>
-                        {task.name_no}
-                      </span>
-                      <span className="text-xs px-2 py-1 bg-slate-100 rounded text-slate-600">
-                        {task.frequency === 'daily' ? 'Daglig' : task.frequency === 'weekly' ? 'Ukentlig' : 'Månedlig'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleTaskActive(task.id, task.is_active)}
-                        className={`px-3 py-1 rounded text-sm ${
-                          task.is_active
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {task.is_active ? 'Aktiv' : 'Inaktiv'}
-                      </button>
-                      <button
-                        onClick={() => setEditingTask(task.id)}
-                        className="p-2 hover:bg-slate-200 rounded"
-                        title="Rediger oppgave"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded"
-                        title="Slett oppgave"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="bg-emerald-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <h3 className="font-semibold text-emerald-900 flex items-center gap-2">
-            <Users className="w-5 h-5" />
-            Brukeradministrasjon
-          </h3>
-          {!addingUser && (
-            <button
-              onClick={() => setAddingUser(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Legg til bruker
-            </button>
-          )}
-        </div>
-        <div className="p-6">
-          {addingUser && (
-            <div className="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Fullt navn</label>
-                  <input
-                    type="text"
-                    value={newUserName}
-                    onChange={(e) => setNewUserName(e.target.value)}
-                    placeholder="Skriv inn fullt navn"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Rolle</label>
-                  <select
-                    value={newUserRole}
-                    onChange={(e) => setNewUserRole(e.target.value as 'staff' | 'supervisor' | 'admin')}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    <option value="staff">Medarbeider</option>
-                    <option value="supervisor">Veileder</option>
-                    <option value="admin">Administrator</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 justify-end">
-                  <button
-                    onClick={() => {
-                      setAddingUser(false);
-                      setNewUserName('');
-                      setNewUserRole('staff');
-                    }}
-                    className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
-                  >
-                    Avbryt
-                  </button>
-                  <button
-                    onClick={addUser}
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Legg til
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {users.length === 0 ? (
+          {tasks.length === 0 && !addingTask && (
             <div className="text-center py-8 text-slate-500">
-              <Users className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-              <p>Ingen brukere ennå</p>
-              <p className="text-sm">Klikk "Legg til bruker" for å komme i gang</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex-1">
-                    <div className="font-medium text-slate-900">{user.full_name}</div>
-                    <div className="text-xs text-slate-500 mt-1">
-                      Opprettet: {new Date(user.created_at).toLocaleDateString('nb-NO')}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={user.role}
-                      onChange={(e) => updateUserRole(user.id, e.target.value)}
-                      className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    >
-                      <option value="staff">Medarbeider</option>
-                      <option value="supervisor">Veileder</option>
-                      <option value="admin">Administrator</option>
-                    </select>
-                    <button
-                      onClick={() => deleteUser(user.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Slett bruker"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              Ingen oppgaver ennå. Klikk "Legg til oppgave" for å komme i gang.
             </div>
           )}
+
+          {tasks.map((task) => (
+            <div key={task.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-lg">
+              <div className="flex-1">
+                <div className="font-semibold text-slate-900">{task.task_name}</div>
+                {task.description && (
+                  <div className="text-sm text-slate-600">{task.description}</div>
+                )}
+                <div className="text-xs text-slate-500 mt-1">
+                  {task.frequency === 'daily' ? 'Daglig' : task.frequency === 'weekly' ? 'Ukentlig' : 'Månedlig'}
+                </div>
+              </div>
+              <button
+                onClick={() => deleteTask(task.id)}
+                className="p-2 hover:bg-red-100 rounded"
+              >
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
