@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { supabase, TemperatureZone, TemperatureItem, TemperatureLog } from '../../lib/supabase';
-import { Thermometer, Plus, Save, Edit2, Trash2, AlertTriangle, Snowflake } from 'lucide-react';
+import { supabase, Zone, Equipment, TemperatureLog, Employee } from '../../lib/supabase';
+import { Thermometer, Save, Edit2, AlertTriangle, Snowflake } from 'lucide-react';
 import CoolingLog from '../Cooling/CoolingLog';
 
 export function TemperatureControl() {
   const [activeTab, setActiveTab] = useState<'temperature' | 'cooling'>('temperature');
-  const [zones, setZones] = useState<(TemperatureZone & { items: TemperatureItem[] })[]>([]);
+  const [zones, setZones] = useState<(Zone & { equipment: Equipment[] })[]>([]);
   const [logs, setLogs] = useState<Record<string, TemperatureLog>>({});
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [temperatures, setTemperatures] = useState<Record<string, string>>({});
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   useEffect(() => {
     loadData();
@@ -18,45 +19,52 @@ export function TemperatureControl() {
   const loadData = async () => {
     try {
       const { data: zonesData, error: zonesError } = await supabase
-        .from('temperature_zones')
+        .from('zones')
         .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
+        .order('name');
 
       console.log('Zones data:', zonesData, 'Error:', zonesError);
 
+      const { data: employeesData } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('active', true);
+
+      if (employeesData) {
+        setEmployees(employeesData);
+      }
+
       if (zonesData) {
-        const zonesWithItems = await Promise.all(
+        const zonesWithEquipment = await Promise.all(
           zonesData.map(async (zone) => {
-            const { data: items, error: itemsError } = await supabase
-              .from('temperature_items')
+            const { data: equipmentItems, error: equipmentError } = await supabase
+              .from('equipment')
               .select('*')
               .eq('zone_id', zone.id)
-              .eq('is_active', true)
-              .order('sort_order');
+              .eq('active', true)
+              .order('name');
 
-            console.log(`Items for zone ${zone.name_no}:`, items, 'Error:', itemsError);
+            console.log(`Equipment for zone ${zone.name}:`, equipmentItems, 'Error:', equipmentError);
 
-            return { ...zone, items: items || [] };
+            return { ...zone, equipment: equipmentItems || [] };
           })
         );
 
-        console.log('Final zones with items:', zonesWithItems);
-        setZones(zonesWithItems);
+        console.log('Final zones with equipment:', zonesWithEquipment);
+        setZones(zonesWithEquipment);
 
         const today = new Date().toISOString().split('T')[0];
         const { data: logsData } = await supabase
           .from('temperature_logs')
           .select('*')
-          .eq('recorded_date', today);
+          .eq('log_date', today);
 
         if (logsData) {
           const logsMap: Record<string, TemperatureLog> = {};
-          // Keep only the most recent log per item
           logsData.forEach((log) => {
-            const existingLog = logsMap[log.item_id];
+            const existingLog = logsMap[log.equipment_id];
             if (!existingLog || new Date(log.created_at) > new Date(existingLog.created_at)) {
-              logsMap[log.item_id] = log;
+              logsMap[log.equipment_id] = log;
             }
           });
           setLogs(logsMap);
@@ -75,25 +83,25 @@ export function TemperatureControl() {
     return 'danger';
   };
 
-  const saveTemperature = async (itemId: string, zoneId: string) => {
-    const temp = parseFloat(temperatures[itemId]);
+  const saveTemperature = async (equipmentId: string, equipment: Equipment) => {
+    const temp = parseFloat(temperatures[equipmentId]);
     if (isNaN(temp)) return;
 
-    const zone = zones.find(z => z.id === zoneId);
-    if (!zone) return;
-
-    const status = calculateStatus(temp, zone.min_temp, zone.max_temp);
+    const status = calculateStatus(temp, equipment.min_temp, equipment.max_temp);
     const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const timeString = now.toTimeString().split(' ')[0];
+
+    const defaultEmployeeId = employees.length > 0 ? employees[0].id : '00000000-0000-0000-0000-000000000000';
 
     try {
-      const existingLog = logs[itemId];
+      const existingLog = logs[equipmentId];
 
       if (existingLog) {
-        // Update existing log for today
         const { data } = await supabase
           .from('temperature_logs')
           .update({
-            recorded_temp: temp,
+            temperature: temp,
             status,
           })
           .eq('id', existingLog.id)
@@ -101,23 +109,21 @@ export function TemperatureControl() {
           .single();
 
         if (data) {
-          setLogs({ ...logs, [itemId]: data });
+          setLogs({ ...logs, [equipmentId]: data });
         }
       } else {
-        // Check if a log already exists for this item today
         const { data: checkData } = await supabase
           .from('temperature_logs')
           .select('*')
-          .eq('item_id', itemId)
-          .eq('recorded_date', today)
+          .eq('equipment_id', equipmentId)
+          .eq('log_date', today)
           .maybeSingle();
 
         if (checkData) {
-          // Log already exists, update it instead
           const { data } = await supabase
             .from('temperature_logs')
             .update({
-              recorded_temp: temp,
+              temperature: temp,
               status,
             })
             .eq('id', checkData.id)
@@ -125,33 +131,33 @@ export function TemperatureControl() {
             .single();
 
           if (data) {
-            setLogs({ ...logs, [itemId]: data });
+            setLogs({ ...logs, [equipmentId]: data });
           }
         } else {
-          // Insert new log
           const { data } = await supabase
             .from('temperature_logs')
             .insert({
-              item_id: itemId,
-              recorded_temp: temp,
+              equipment_id: equipmentId,
+              temperature: temp,
               status,
-              recorded_by: '00000000-0000-0000-0000-000000000000',
-              recorded_date: today,
+              recorded_by: defaultEmployeeId,
+              log_date: today,
+              log_time: timeString,
             })
             .select()
             .single();
 
           if (data) {
-            setLogs({ ...logs, [itemId]: data });
+            setLogs({ ...logs, [equipmentId]: data });
           }
         }
       }
 
       setEditingItem(null);
-      setTemperatures({ ...temperatures, [itemId]: '' });
+      setTemperatures({ ...temperatures, [equipmentId]: '' });
     } catch (error) {
       console.error('Error saving temperature:', error);
-      alert('حدث خطأ أثناء الحفظ. القياس موجود بالفعل لهذا اليوم.');
+      alert('Det oppstod en feil ved lagring av temperaturen');
     }
   };
 
@@ -220,96 +226,106 @@ export function TemperatureControl() {
         <CoolingLog />
       ) : (
         <>
-
-      {zones.length === 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-          <AlertTriangle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-amber-900 mb-2">Ingen temperatursoner funnet</h3>
-          <p className="text-amber-700">
-            Sjekk konsollen (F12) for feilmeldinger eller gå til Innstillinger for å legge til soner.
-          </p>
-        </div>
-      )}
-
-      {zones.map((zone) => (
-        <div key={zone.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-            <h3 className="font-semibold text-slate-900">{zone.name_no}</h3>
-            <p className="text-sm text-slate-600">
-              Trygt område: {zone.min_temp}°C til {zone.max_temp}°C
-            </p>
-          </div>
-
-          <div className="p-6">
-            <div className="space-y-4">
-              {zone.items.map((item) => {
-                const log = logs[item.id];
-                const isEditing = editingItem === item.id;
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      log ? getStatusColor(log.status) : 'bg-slate-50 border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <span className="font-medium text-slate-900">{item.name_no}</span>
-                        {log && getStatusIcon(log.status)}
-                      </div>
-
-                      {log && !isEditing && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl font-bold">
-                            {log.recorded_temp}°C
-                          </span>
-                          <button
-                            onClick={() => {
-                              setEditingItem(item.id);
-                              setTemperatures({ ...temperatures, [item.id]: log.recorded_temp.toString() });
-                            }}
-                            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-
-                      {(!log || isEditing) && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            step="0.1"
-                            value={temperatures[item.id] || ''}
-                            onChange={(e) => setTemperatures({ ...temperatures, [item.id]: e.target.value })}
-                            placeholder="°C"
-                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <button
-                            onClick={() => saveTemperature(item.id, zone.id)}
-                            disabled={!temperatures[item.id]}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                          >
-                            <Save className="w-4 h-4" />
-                            Lagre
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {log && (
-                      <div className="mt-2 text-xs text-slate-600">
-                        Registrert: {new Date(log.created_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+          {zones.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+              <AlertTriangle className="w-12 h-12 text-amber-600 mx-auto mb-3" />
+              <h3 className="text-lg font-semibold text-amber-900 mb-2">Ingen soner funnet</h3>
+              <p className="text-amber-700">
+                Gå til Innstillinger for å legge til soner og utstyr først.
+              </p>
             </div>
-          </div>
-        </div>
-      ))}
+          )}
+
+          {zones.map((zone) => {
+            const zoneEquipment = zone.equipment || [];
+
+            if (zoneEquipment.length === 0) {
+              return null;
+            }
+
+            return (
+              <div key={zone.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                  <h3 className="font-semibold text-slate-900">{zone.name}</h3>
+                  {zone.description && (
+                    <p className="text-sm text-slate-600">{zone.description}</p>
+                  )}
+                </div>
+
+                <div className="p-6">
+                  <div className="space-y-4">
+                    {zoneEquipment.map((item) => {
+                      const log = logs[item.id];
+                      const isEditing = editingItem === item.id;
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            log ? getStatusColor(log.status) : 'bg-slate-50 border-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="font-medium text-slate-900">{item.name}</span>
+                              {log && getStatusIcon(log.status)}
+                              <span className="text-xs text-slate-500">
+                                ({item.min_temp}°C til {item.max_temp}°C)
+                              </span>
+                            </div>
+
+                            {log && !isEditing && (
+                              <div className="flex items-center gap-3">
+                                <span className="text-2xl font-bold">
+                                  {log.temperature}°C
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    setEditingItem(item.id);
+                                    setTemperatures({ ...temperatures, [item.id]: log.temperature.toString() });
+                                  }}
+                                  className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+
+                            {(!log || isEditing) && (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={temperatures[item.id] || ''}
+                                  onChange={(e) => setTemperatures({ ...temperatures, [item.id]: e.target.value })}
+                                  placeholder="°C"
+                                  className="w-24 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  onClick={() => saveTemperature(item.id, item)}
+                                  disabled={!temperatures[item.id]}
+                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                >
+                                  <Save className="w-4 h-4" />
+                                  Lagre
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {log && (
+                            <div className="mt-2 text-xs text-slate-600">
+                              Registrert: {new Date(log.created_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </>
       )}
     </div>
