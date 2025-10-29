@@ -44,7 +44,7 @@ export function LoginForm() {
           <h1 className="text-3xl font-bold text-center mb-2 text-slate-900">
             HACCP System
           </h1>
-          <p className="text-center text-slate-600 mb-6">GE Amigos AS</p>
+          <p className="text-center text-slate-600 mb-6">LA kokido</p>
 
           <div className="flex gap-2 mb-6">
             <button

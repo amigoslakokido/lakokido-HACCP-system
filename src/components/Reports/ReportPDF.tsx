@@ -116,9 +116,9 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
         <div className="border-4 border-slate-800 p-8">
           <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-300">
             <div className="flex items-center gap-4">
-              <img src="/logo.png" alt="GE Amigos Logo" className="w-24 h-24 object-contain" />
+              <img src="/visas.jpg" alt="LA kokido Logo" className="w-24 h-24 object-contain" />
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">GE Amigos AS</h1>
+                <h1 className="text-3xl font-bold text-slate-900">LA kokido</h1>
                 <p className="text-slate-600 mt-1">HACCP Daglig Kontrollrapport</p>
               </div>
             </div>
@@ -141,7 +141,7 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">🏢 Bedrift</div>
-              <div className="text-lg font-semibold text-slate-900 mt-1">GE Amigos AS</div>
+              <div className="text-lg font-semibold text-slate-900 mt-1">LA kokido</div>
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">📊 Status</div>

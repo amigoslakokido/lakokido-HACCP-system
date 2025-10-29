@@ -26,12 +26,12 @@ export function Dashboard() {
       const { data: tempLogs, count: tempCount } = await supabase
         .from('temperature_logs')
         .select('*', { count: 'exact' })
-        .eq('recorded_date', today);
+        .eq('log_date', today);
 
       const { count: totalTempItems } = await supabase
-        .from('temperature_items')
+        .from('equipment')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('active', true);
 
       const warningCount = tempLogs?.filter(log => log.status === 'warning').length || 0;
       const dangerCount = tempLogs?.filter(log => log.status === 'danger').length || 0;
@@ -40,12 +40,12 @@ export function Dashboard() {
         .from('cleaning_logs')
         .select('*', { count: 'exact' })
         .eq('log_date', today)
-        .eq('is_completed', true);
+        .eq('status', 'completed');
 
       const { count: totalCleaningTasks } = await supabase
         .from('cleaning_tasks')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('active', true);
 
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
@@ -226,8 +226,7 @@ export function Dashboard() {
       <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg p-8 text-white">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-2xl font-bold mb-2">GE Amigos AS</h3>
-            <p className="text-emerald-100 mb-4">Hollendergata 2, 1607 Fredrikstad</p>
+            <h3 className="text-2xl font-bold mb-2">LA kokido</h3>
             <p className="text-emerald-50">
               Digital kontrollsystem for mattrygghet og HACCP-overvåking
             </p>

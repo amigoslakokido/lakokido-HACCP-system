@@ -45,12 +45,10 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
-                <Thermometer className="w-6 h-6 text-white" />
-              </div>
+              <img src="/visas.jpg" alt="LA kokido" className="w-12 h-12 object-contain" />
               <div>
                 <h1 className="text-lg font-bold text-slate-900">HACCP System</h1>
-                <p className="text-xs text-slate-600 hidden sm:block">GE Amigos AS</p>
+                <p className="text-xs text-slate-600 hidden sm:block">LA kokido</p>
               </div>
             </div>
 
@@ -112,8 +110,7 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center text-sm text-slate-600">
-            <p>HACCP Digital Control System - GE Amigos AS</p>
-            <p className="mt-1">Hollendergata 2, 1607 Fredrikstad</p>
+            <p>HACCP Digital Control System - LA kokido</p>
           </div>
         </div>
       </footer>
