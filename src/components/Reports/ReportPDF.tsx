@@ -306,42 +306,50 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
           </div>
 
           {coolingLogs && coolingLogs.length > 0 && (
-            <div className="border-t-2 border-slate-300 pt-6 mt-8">
-              <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                <span className="text-cyan-600">❄</span> Nedkjølingslogg
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b-2 border-purple-500">
+                ❄️ Nedkjølingslogg
               </h2>
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="bg-slate-200">
                     <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Produkt</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Start (°C)</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">2t (°C)</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">6t (°C)</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Total Tid</th>
+                    <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Type</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Start Temp</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Slutt Temp</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Starttid</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Sluttid</th>
                     <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Status</th>
-                    <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Registrert av</th>
+                    <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Merknad</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {coolingLogs.map((log, index) => (
-                    <tr key={log.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                      <td className="border border-slate-300 p-3 text-sm font-medium">{log.product_name}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.temp_initial?.toFixed(1)}°</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.temp_2h?.toFixed(1)}°</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.temp_6h?.toFixed(1)}°</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{log.total_duration_hours}t</td>
-                      <td className="border border-slate-300 p-3 text-center">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          log.status === 'safe' ? 'bg-green-100 text-green-800' :
-                          log.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                  {coolingLogs.map((log, index) => {
+                    const startTime = new Date(log.start_time).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+                    const endTime = new Date(log.end_time).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+                    const isWithinLimits = log.within_limits;
+
+                    return (
+                      <tr key={log.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                        <td className="border border-slate-300 p-3 text-sm font-medium">{log.product_name}</td>
+                        <td className="border border-slate-300 p-3 text-sm">{log.product_type}</td>
+                        <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.initial_temp}°C</td>
+                        <td className={`border border-slate-300 p-3 text-center text-sm font-mono font-bold ${
+                          isWithinLimits ? 'text-emerald-600' : 'text-red-600'
                         }`}>
-                          {log.status === 'safe' ? 'Sikker' : log.status === 'warning' ? 'Advarsel' : 'Farlig'}
-                        </span>
-                      </td>
-                      <td className="border border-slate-300 p-3 text-sm">{log.employees?.name || '—'}</td>
-                    </tr>
-                  ))}
+                          {log.final_temp}°C
+                        </td>
+                        <td className="border border-slate-300 p-3 text-center text-sm font-mono">{startTime}</td>
+                        <td className="border border-slate-300 p-3 text-center text-sm font-mono">{endTime}</td>
+                        <td className={`border border-slate-300 p-3 text-center text-sm font-semibold ${
+                          isWithinLimits ? 'text-emerald-600' : 'text-red-600'
+                        }`}>
+                          {isWithinLimits ? '✓ Godkjent' : '✗ Ikke godkjent'}
+                        </td>
+                        <td className="border border-slate-300 p-3 text-sm italic text-slate-600">{log.notes || '—'}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
