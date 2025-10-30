@@ -43,8 +43,8 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const maxViolations = Math.min(violationCount, 5);
 
     for (const item of items) {
-      const zone = item.zones;
-      if (!zone) continue;
+      const minTemp = parseFloat(item.min_temp);
+      const maxTemp = parseFloat(item.max_temp);
 
       const time = timeSlots[Math.floor(Math.random() * timeSlots.length)];
       let temp: number;
@@ -58,26 +58,26 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
         const violationType = Math.random() < 0.5 ? 'warning' : 'danger';
 
         if (violationType === 'danger') {
-          if (zone.min_temp < 0) {
-            temp = parseFloat((zone.max_temp + 2 + Math.random() * 3).toFixed(1));
+          if (minTemp < 0) {
+            temp = parseFloat((maxTemp + 2 + Math.random() * 3).toFixed(1));
           } else {
-            temp = parseFloat((zone.min_temp - 3 - Math.random() * 4).toFixed(1));
+            temp = parseFloat((minTemp - 3 - Math.random() * 4).toFixed(1));
           }
           status = 'danger';
         } else {
           if (Math.random() < 0.5) {
-            temp = parseFloat((zone.min_temp - 1 - Math.random() * 2).toFixed(1));
+            temp = parseFloat((minTemp - 1 - Math.random() * 2).toFixed(1));
           } else {
-            temp = parseFloat((zone.max_temp + 1 + Math.random() * 2).toFixed(1));
+            temp = parseFloat((maxTemp + 1 + Math.random() * 2).toFixed(1));
           }
           status = 'warning';
         }
         violationsAdded++;
       } else {
-        const range = zone.max_temp - zone.min_temp;
+        const range = maxTemp - minTemp;
         const safeRange = range * 0.7;
         const offset = range * 0.15;
-        temp = parseFloat((zone.min_temp + offset + Math.random() * safeRange).toFixed(1));
+        temp = parseFloat((minTemp + offset + Math.random() * safeRange).toFixed(1));
         status = 'safe';
       }
 

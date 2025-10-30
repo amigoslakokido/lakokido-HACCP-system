@@ -217,16 +217,16 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
                           <tbody>
                             {logs.map((log, index) => (
                               <tr key={log.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                                <td className="border border-slate-300 p-3 text-sm">{log.temperature_items?.name_no}</td>
-                                <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.recorded_time}</td>
+                                <td className="border border-slate-300 p-3 text-sm">{log.equipment?.name}</td>
+                                <td className="border border-slate-300 p-3 text-center text-sm font-mono">{log.log_time}</td>
                                 <td className={`border border-slate-300 p-3 text-center text-sm font-bold ${
                                   log.status === 'safe' ? 'text-emerald-600' :
                                   log.status === 'warning' ? 'text-amber-600' : 'text-red-600'
                                 }`}>
-                                  {log.recorded_temp}°C
+                                  {log.temperature}°C
                                 </td>
                                 <td className="border border-slate-300 p-3 text-center text-sm">
-                                  {log.temperature_items?.temperature_zones?.min_temp}° til {log.temperature_items?.temperature_zones?.max_temp}°
+                                  {log.equipment?.min_temp}° til {log.equipment?.max_temp}°
                                 </td>
                                 <td className={`border border-slate-300 p-3 text-center text-sm font-semibold ${
                                   log.status === 'safe' ? 'text-emerald-600' :
@@ -234,7 +234,7 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
                                 }`}>
                                   {log.status === 'safe' ? '✓ OK' : log.status === 'warning' ? '⚠ Advarsel' : '✕ Kritisk'}
                                 </td>
-                                <td className="border border-slate-300 p-3 text-sm">{log.profiles?.full_name || '—'}</td>
+                                <td className="border border-slate-300 p-3 text-sm">{log.employees?.name || '—'}</td>
                               </tr>
                             ))}
                           </tbody>

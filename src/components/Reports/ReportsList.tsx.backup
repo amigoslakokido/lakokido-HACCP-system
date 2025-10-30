@@ -142,14 +142,14 @@ export function ReportsList() {
         .from('temperature_logs')
         .select(`
           *,
-          equipment (
-            name,
-            zones (name, min_temp, max_temp)
+          temperature_items (
+            name_no,
+            temperature_zones (name_no, min_temp, max_temp)
           ),
-          employees:recorded_by (name)
+          profiles (full_name)
         `)
-        .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .eq('recorded_date', report.report_date)
+        .order('recorded_time', { ascending: true });
 
       console.log('🌡️ Temperature logs loaded:', tempLogs?.length || 0, 'records');
       if (tempError) console.error('❌ Temperature logs error:', tempError);
@@ -158,11 +158,11 @@ export function ReportsList() {
         .from('cleaning_logs')
         .select(`
           *,
-          cleaning_tasks (task_name, frequency),
-          employees:recorded_by (name)
+          cleaning_tasks (name_no, frequency),
+          profiles (full_name)
         `)
         .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .order('completed_at', { ascending: true });
 
       console.log('🧹 Cleaning logs loaded:', cleaningLogs?.length || 0, 'records');
       if (cleaningError) console.error('❌ Cleaning logs error:', cleaningError);
@@ -171,8 +171,8 @@ export function ReportsList() {
         .from('hygiene_checks')
         .select(`
           *,
-          employees:checked_by (id, name),
-          employees:checker_id (id, name)
+          profiles:checked_by (id, full_name),
+          checker:checker_id (id, full_name)
         `)
         .eq('check_date', report.report_date);
 
@@ -180,7 +180,7 @@ export function ReportsList() {
 
       const { data: coolingLogs } = await supabase
         .from('cooling_logs')
-        .select('*, employees:recorded_by (id, name)')
+        .select('*, profiles:recorded_by (id, full_name)')
         .eq('log_date', report.report_date);
 
       console.log('❄️ Cooling logs loaded:', coolingLogs?.length || 0, 'records');
@@ -199,7 +199,7 @@ export function ReportsList() {
     if (!confirm('Er du sikker på at du vil slette denne rapporten?')) return;
 
     try {
-      await supabase.from('temperature_logs').delete().eq('log_date', reports.find(r => r.id === id)?.report_date || '');
+      await supabase.from('temperature_logs').delete().eq('recorded_date', reports.find(r => r.id === id)?.report_date || '');
       await supabase.from('cleaning_logs').delete().eq('log_date', reports.find(r => r.id === id)?.report_date || '');
       await supabase.from('daily_reports').delete().eq('id', id);
       setReports(reports.filter(r => r.id !== id));
@@ -216,7 +216,7 @@ export function ReportsList() {
       for (const id of selectedReports) {
         const report = reports.find(r => r.id === id);
         if (report) {
-          await supabase.from('temperature_logs').delete().eq('log_date', report.report_date);
+          await supabase.from('temperature_logs').delete().eq('recorded_date', report.report_date);
           await supabase.from('cleaning_logs').delete().eq('log_date', report.report_date);
           await supabase.from('daily_reports').delete().eq('id', id);
         }
@@ -248,37 +248,37 @@ export function ReportsList() {
         .from('temperature_logs')
         .select(`
           *,
-          equipment (
-            name,
-            zones (name, min_temp, max_temp)
+          temperature_items (
+            name_no,
+            temperature_zones (name_no, min_temp, max_temp)
           ),
-          employees:recorded_by (name)
+          profiles (full_name)
         `)
-        .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .eq('recorded_date', report.report_date)
+        .order('recorded_time', { ascending: true });
 
       const { data: cleaningLogs } = await supabase
         .from('cleaning_logs')
         .select(`
           *,
-          cleaning_tasks (task_name, frequency),
-          employees:recorded_by (name)
+          cleaning_tasks (name_no, frequency),
+          profiles (full_name)
         `)
         .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .order('completed_at', { ascending: true });
 
       const { data: hygieneChecks } = await supabase
         .from('hygiene_checks')
         .select(`
           *,
-          employees:checked_by (id, name),
-          employees:checker_id (id, name)
+          profiles:checked_by (id, full_name),
+          checker:checker_id (id, full_name)
         `)
         .eq('check_date', report.report_date);
 
       const { data: coolingLogs } = await supabase
         .from('cooling_logs')
-        .select('*, employees:recorded_by (id, name)')
+        .select('*, profiles:recorded_by (id, full_name)')
         .eq('log_date', report.report_date);
 
       const tempDiv = document.createElement('div');
@@ -374,24 +374,24 @@ export function ReportsList() {
         .from('temperature_logs')
         .select(`
           *,
-          equipment (
-            name,
-            zones (name, min_temp, max_temp)
+          temperature_items (
+            name_no,
+            temperature_zones (name_no, min_temp, max_temp)
           ),
-          employees:recorded_by (name)
+          profiles (full_name)
         `)
-        .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .eq('recorded_date', report.report_date)
+        .order('recorded_time', { ascending: true });
 
       const { data: cleaningLogs } = await supabase
         .from('cleaning_logs')
         .select(`
           *,
-          cleaning_tasks (task_name, frequency, description),
-          employees:recorded_by (name)
+          cleaning_tasks (name_no, frequency, description),
+          profiles (full_name)
         `)
         .eq('log_date', report.report_date)
-        .order('log_time', { ascending: true });
+        .order('completed_at', { ascending: true });
 
       console.log('✅ Data loaded:', {
         tempLogs: tempLogs?.length || 0,
