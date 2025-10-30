@@ -270,8 +270,13 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       });
     }
 
+    console.log('🧊 Cooling logs to insert:', coolingLogs.length, 'records');
+    console.log('🧊 Cooling logs data:', JSON.stringify(coolingLogs, null, 2));
+
     if (coolingLogs.length > 0) {
-      await supabase.from('cooling_logs').insert(coolingLogs);
+      const { data: insertedCooling, error: coolingError } = await supabase.from('cooling_logs').insert(coolingLogs).select();
+      console.log('🧊 Cooling logs inserted:', insertedCooling?.length || 0);
+      if (coolingError) console.error('❌ Cooling logs error:', coolingError);
     }
 
     const totalViolations = tempLogs.filter(l => l.status === 'danger' || l.status === 'warning').length;
