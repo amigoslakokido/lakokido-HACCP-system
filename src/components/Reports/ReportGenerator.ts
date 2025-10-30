@@ -30,7 +30,7 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       .eq('status', 'active');
 
     if (!items || !tasks || !profiles || profiles.length === 0) {
-      throw new Error('Mangler nødvendige data for å generere rapport');
+      throw new Error('Mangler nødvendige data for å opprette rapport');
     }
 
     // Count existing reports to determine violation frequency

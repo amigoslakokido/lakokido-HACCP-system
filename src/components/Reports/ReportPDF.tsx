@@ -46,7 +46,7 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
       pdf.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Det oppstod en feil ved generering av PDF');
+      alert('Det oppstod en feil ved opprettelse av PDF');
     }
   };
 

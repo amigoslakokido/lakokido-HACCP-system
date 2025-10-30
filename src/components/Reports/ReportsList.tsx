@@ -73,7 +73,7 @@ export function ReportsList() {
       await loadReports();
     } catch (error) {
       console.error('Error generating report:', error);
-      alert('Feil ved generering av rapport: ' + (error as Error).message);
+      alert('Feil ved opprettelse av rapport: ' + (error as Error).message);
     } finally {
       setGenerating(false);
     }
@@ -539,7 +539,7 @@ export function ReportsList() {
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">Generer ny rapport</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">Opprett ny rapport</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -559,13 +559,13 @@ export function ReportsList() {
               className="w-full bg-violet-600 text-white py-3 rounded-lg font-semibold hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               <FileText className="w-5 h-5" />
-              {generating ? 'Genererer...' : 'Generer rapport'}
+              {generating ? 'Oppretter...' : 'Opprett rapport'}
             </button>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">Massegenerer rapporter</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">Masseopprett rapporter</h3>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -599,7 +599,7 @@ export function ReportsList() {
               className="w-full bg-slate-600 text-white py-3 rounded-lg font-semibold hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               <Calendar className="w-5 h-5" />
-              {generating ? 'Genererer...' : 'Massegenerer'}
+              {generating ? 'Oppretter...' : 'Masseopprett'}
             </button>
           </div>
         </div>
@@ -693,7 +693,12 @@ export function ReportsList() {
                         Status: <span className="font-medium">{getStatusLabel(report.overall_status)}</span>
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Generert: {new Date(report.generated_at).toLocaleString('nb-NO')}
+                        Utarbeidet: {new Date(report.report_date + 'T12:00:00').toLocaleDateString('nb-NO', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
                       </div>
                     </div>
                   </div>
