@@ -215,7 +215,7 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       const startTime = timeSlots[Math.floor(Math.random() * timeSlots.length)];
       const startHour = parseInt(startTime.split(':')[0]);
       const endHour = (startHour + 6) % 24;
-      const endTime = `${endHour.toString().padStart(2, '0')}:${startTime.split(':')[1]}`;
+      const endTimeStr = `${endHour.toString().padStart(2, '0')}:${startTime.split(':')[1]}`;
 
       coolingLogs.push({
         log_date: date,
@@ -223,8 +223,8 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
         product_name: product.name,
         initial_temp: initialTemp,
         final_temp: finalTemp,
-        start_time: startTime,
-        end_time: endTime,
+        start_time: `${date}T${startTime}:00`,
+        end_time: `${date}T${endTimeStr}:00`,
         within_limits: withinLimits,
         notes: notes
       });

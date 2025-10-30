@@ -64,15 +64,15 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
   const dangerCount = tempLogs?.filter(l => l.status === 'danger').length || 0;
   const totalTemp = tempLogs?.length || 0;
 
-  const completedCleaning = cleaningLogs?.filter(l => l.is_completed).length || 0;
+  const completedCleaning = cleaningLogs?.filter(l => l.status === 'completed').length || 0;
   const totalCleaning = cleaningLogs?.length || 0;
 
   const employeeNames = new Set<string>();
   tempLogs?.forEach(log => {
-    if (log.profiles?.full_name) employeeNames.add(log.profiles.full_name);
+    if (log.employees?.name) employeeNames.add(log.employees.name);
   });
   cleaningLogs?.forEach(log => {
-    if (log.profiles?.full_name) employeeNames.add(log.profiles.full_name);
+    if (log.employees?.name) employeeNames.add(log.employees.name);
   });
   const employees = Array.from(employeeNames);
   const supervisor = employees[0] || 'Ikke tildelt';
@@ -190,15 +190,25 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
             ) : (
               (() => {
                 const groupedByZone = tempLogs.reduce((acc, log) => {
-                  const zoneName = log.temperature_items?.temperature_zones?.name_no || 'Ukjent';
+                  const zoneName = log.equipment?.zones?.name || 'Ukjent';
                   if (!acc[zoneName]) acc[zoneName] = [];
                   acc[zoneName].push(log);
                   return acc;
                 }, {} as Record<string, typeof tempLogs>);
 
+                const zoneOrder = ['Kjøleskap', 'Fryser', 'Varemottak', 'Nedkjøling'];
+                const sortedEntries = Object.entries(groupedByZone).sort((a, b) => {
+                  const indexA = zoneOrder.indexOf(a[0]);
+                  const indexB = zoneOrder.indexOf(b[0]);
+                  if (indexA === -1 && indexB === -1) return 0;
+                  if (indexA === -1) return 1;
+                  if (indexB === -1) return -1;
+                  return indexA - indexB;
+                });
+
                 return (
                   <div className="space-y-6">
-                    {Object.entries(groupedByZone).map(([zoneName, logs]) => (
+                    {sortedEntries.map(([zoneName, logs]) => (
                       <div key={zoneName}>
                         <h3 className="text-lg font-semibold text-slate-800 mb-3 bg-slate-100 p-2 rounded">
                           {zoneName}
@@ -276,16 +286,16 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
                   <tbody>
                     {cleaningLogs.map((log, index) => (
                       <tr key={log.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                        <td className="border border-slate-300 p-3 text-sm">{log.cleaning_tasks?.name_no}</td>
+                        <td className="border border-slate-300 p-3 text-sm">{log.cleaning_tasks?.task_name}</td>
                         <td className="border border-slate-300 p-3 text-center text-sm font-mono">
-                          {log.completed_at ? new Date(log.completed_at).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                          {log.log_time || '—'}
                         </td>
                         <td className={`border border-slate-300 p-3 text-center text-sm font-semibold ${
-                          log.is_completed ? 'text-emerald-600' : 'text-slate-600'
+                          log.status === 'completed' ? 'text-emerald-600' : 'text-slate-600'
                         }`}>
-                          {log.is_completed ? '✓ Fullført' : '○ Ikke utført'}
+                          {log.status === 'completed' ? '✓ Fullført' : '○ Ikke utført'}
                         </td>
-                        <td className="border border-slate-300 p-3 text-sm">{log.profiles?.full_name || '—'}</td>
+                        <td className="border border-slate-300 p-3 text-sm">{log.employees?.name || '—'}</td>
                         <td className="border border-slate-300 p-3 text-sm italic text-slate-600">
                           {log.notes || '—'}
                         </td>
@@ -331,7 +341,7 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
                           {log.status === 'safe' ? 'Sikker' : log.status === 'warning' ? 'Advarsel' : 'Farlig'}
                         </span>
                       </td>
-                      <td className="border border-slate-300 p-3 text-sm">{log.profiles?.full_name || '—'}</td>
+                      <td className="border border-slate-300 p-3 text-sm">{log.employees?.name || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -348,30 +358,22 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
                 <thead>
                   <tr className="bg-slate-200">
                     <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Ansatt</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Uniform</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Hansker</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Håndvask</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Negler</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Hår</th>
-                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Status</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Uniform ren</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Hender vasket</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Smykker fjernet</th>
+                    <th className="border border-slate-400 p-3 text-center text-sm font-semibold">Sykdomsfri</th>
+                    <th className="border border-slate-400 p-3 text-left text-sm font-semibold">Merknader</th>
                   </tr>
                 </thead>
                 <tbody>
                   {hygieneChecks.map((check, index) => (
                     <tr key={check.id} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                      <td className="border border-slate-300 p-3 text-sm font-medium">{check.profiles?.full_name || 'Ukjent'}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{check.uniform_ok ? '✓' : '✗'}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{check.gloves_ok ? '✓' : '✗'}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{check.handwashing_ok ? '✓' : '✗'}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{check.nails_ok ? '✓' : '✗'}</td>
-                      <td className="border border-slate-300 p-3 text-center text-sm">{check.hair_ok ? '✓' : '✗'}</td>
-                      <td className="border border-slate-300 p-3 text-center">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          check.overall_status === 'OK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {check.overall_status}
-                        </span>
-                      </td>
+                      <td className="border border-slate-300 p-3 text-sm font-medium">{check.staff_name || 'Ukjent'}</td>
+                      <td className="border border-slate-300 p-3 text-center text-sm">{check.uniform_clean ? '✓' : '✗'}</td>
+                      <td className="border border-slate-300 p-3 text-center text-sm">{check.hands_washed ? '✓' : '✗'}</td>
+                      <td className="border border-slate-300 p-3 text-center text-sm">{check.jewelry_removed ? '✓' : '✗'}</td>
+                      <td className="border border-slate-300 p-3 text-center text-sm">{check.illness_free ? '✓' : '✗'}</td>
+                      <td className="border border-slate-300 p-3 text-sm italic text-slate-600">{check.notes || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
