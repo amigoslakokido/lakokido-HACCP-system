@@ -30,7 +30,12 @@ export function SettingsModule() {
 
   const [addingEmployee, setAddingEmployee] = useState(false);
   const [newEmployeeName, setNewEmployeeName] = useState('');
-  const [newEmployeeRole, setNewEmployeeRole] = useState('staff');
+  const [newEmployeeRole, setNewEmployeeRole] = useState<'daglig_leder' | 'kontrollor' | 'medarbeider'>('medarbeider');
+
+  const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
+  const [editingEmployeeName, setEditingEmployeeName] = useState('');
+  const [editingEmployeeRole, setEditingEmployeeRole] = useState<'daglig_leder' | 'kontrollor' | 'medarbeider'>('medarbeider');
+  const [editingEmployeeStatus, setEditingEmployeeStatus] = useState<'active' | 'paused'>('active');
 
   const [addingTask, setAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
@@ -77,6 +82,7 @@ export function SettingsModule() {
       const { data: employeesData } = await supabase
         .from('employees')
         .select('*')
+        .order('role', { ascending: false })
         .order('name');
 
       if (employeesData) {
@@ -269,6 +275,7 @@ export function SettingsModule() {
         .insert({
           name: newEmployeeName,
           role: newEmployeeRole,
+          status: 'active',
           active: true,
         })
         .select()
@@ -278,7 +285,7 @@ export function SettingsModule() {
         setEmployees([...employees, data]);
         setAddingEmployee(false);
         setNewEmployeeName('');
-        setNewEmployeeRole('staff');
+        setNewEmployeeRole('medarbeider');
       }
     } catch (error) {
       console.error('Error adding employee:', error);
@@ -286,8 +293,65 @@ export function SettingsModule() {
     }
   };
 
+  const startEditingEmployee = (employee: Employee) => {
+    setEditingEmployee(employee.id);
+    setEditingEmployeeName(employee.name);
+    setEditingEmployeeRole(employee.role as 'daglig_leder' | 'kontrollor' | 'medarbeider');
+    setEditingEmployeeStatus(employee.status as 'active' | 'paused');
+  };
+
+  const saveEmployee = async () => {
+    if (!editingEmployee || !editingEmployeeName.trim()) return;
+
+    try {
+      const { data } = await supabase
+        .from('employees')
+        .update({
+          name: editingEmployeeName,
+          role: editingEmployeeRole,
+          status: editingEmployeeStatus,
+        })
+        .eq('id', editingEmployee)
+        .select()
+        .single();
+
+      if (data) {
+        setEmployees(employees.map(e => e.id === editingEmployee ? data : e));
+        setEditingEmployee(null);
+      }
+    } catch (error) {
+      console.error('Error updating employee:', error);
+      alert('Det oppstod en feil ved oppdatering av ansatt');
+    }
+  };
+
+  const toggleEmployeeStatus = async (employeeId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    const confirmMsg = newStatus === 'paused'
+      ? 'Er du sikker på at du vil pause denne ansatte? Ansatte vil fortsatt vises i tidligere rapporter.'
+      : 'Vil du aktivere denne ansatte igjen?';
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const { data } = await supabase
+        .from('employees')
+        .update({ status: newStatus })
+        .eq('id', employeeId)
+        .select()
+        .single();
+
+      if (data) {
+        setEmployees(employees.map(e => e.id === employeeId ? data : e));
+      }
+    } catch (error) {
+      console.error('Error toggling employee status:', error);
+      alert('Det oppstod en feil ved endring av status');
+    }
+  };
+
   const deleteEmployee = async (employeeId: string) => {
-    if (!confirm('Er du sikker på at du vil slette denne ansatte?')) return;
+    if (!confirm('Er du sikker på at du vil slette denne ansatte? Ansatte vil fortsatt vises i tidligere rapporter.')) return;
 
     try {
       await supabase.from('employees').delete().eq('id', employeeId);
@@ -678,13 +742,15 @@ export function SettingsModule() {
                   placeholder="Navn"
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                 />
-                <input
-                  type="text"
+                <select
                   value={newEmployeeRole}
-                  onChange={(e) => setNewEmployeeRole(e.target.value)}
-                  placeholder="Rolle (f.eks. Kokk, Servitør)"
+                  onChange={(e) => setNewEmployeeRole(e.target.value as any)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                />
+                >
+                  <option value="medarbeider">Medarbeider</option>
+                  <option value="kontrollor">Kontrollør</option>
+                  <option value="daglig_leder">Daglig leder</option>
+                </select>
                 <div className="flex gap-2">
                   <button
                     onClick={addEmployee}
@@ -696,7 +762,7 @@ export function SettingsModule() {
                     onClick={() => {
                       setAddingEmployee(false);
                       setNewEmployeeName('');
-                      setNewEmployeeRole('staff');
+                      setNewEmployeeRole('medarbeider');
                     }}
                     className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
                   >
@@ -714,17 +780,87 @@ export function SettingsModule() {
           )}
 
           {employees.map((employee) => (
-            <div key={employee.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-lg">
-              <div>
-                <div className="font-semibold text-slate-900">{employee.name}</div>
-                <div className="text-sm text-slate-600">{employee.role}</div>
-              </div>
-              <button
-                onClick={() => deleteEmployee(employee.id)}
-                className="p-2 hover:bg-red-100 rounded"
-              >
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </button>
+            <div key={employee.id} className="bg-slate-50 p-4 rounded-lg">
+              {editingEmployee === employee.id ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editingEmployeeName}
+                    onChange={(e) => setEditingEmployeeName(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  />
+                  <select
+                    value={editingEmployeeRole}
+                    onChange={(e) => setEditingEmployeeRole(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="medarbeider">Medarbeider</option>
+                    <option value="kontrollor">Kontrollør</option>
+                    <option value="daglig_leder">Daglig leder</option>
+                  </select>
+                  <select
+                    value={editingEmployeeStatus}
+                    onChange={(e) => setEditingEmployeeStatus(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="active">Aktiv</option>
+                    <option value="paused">Pause</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveEmployee}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                    >
+                      Lagre
+                    </button>
+                    <button
+                      onClick={() => setEditingEmployee(null)}
+                      className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-semibold text-slate-900">{employee.name}</div>
+                      {employee.status === 'paused' && (
+                        <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded">Pause</span>
+                      )}
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {employee.role === 'daglig_leder' && '👔 Daglig leder'}
+                      {employee.role === 'kontrollor' && '🔍 Kontrollør'}
+                      {employee.role === 'medarbeider' && '👤 Medarbeider'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => startEditingEmployee(employee)}
+                      className="p-2 hover:bg-blue-100 rounded"
+                      title="Rediger"
+                    >
+                      <Edit2 className="w-4 h-4 text-blue-600" />
+                    </button>
+                    <button
+                      onClick={() => toggleEmployeeStatus(employee.id, employee.status || 'active')}
+                      className="p-2 hover:bg-amber-100 rounded"
+                      title={employee.status === 'paused' ? 'Aktiver' : 'Pause'}
+                    >
+                      {employee.status === 'paused' ? '▶️' : '⏸️'}
+                    </button>
+                    <button
+                      onClick={() => deleteEmployee(employee.id)}
+                      className="p-2 hover:bg-red-100 rounded"
+                      title="Slett"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

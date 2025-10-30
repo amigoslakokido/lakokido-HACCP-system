@@ -27,11 +27,15 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const { data: profiles } = await supabase
       .from('employees')
       .select('*')
-      .eq('active', true);
+      .eq('status', 'active');
 
     if (!items || !tasks || !profiles || profiles.length === 0) {
       throw new Error('Mangler nødvendige data for å generere rapport');
     }
+
+    // Separate managers (daglig_leder + kontrollor) from regular staff
+    const managers = profiles.filter(p => p.role === 'daglig_leder' || p.role === 'kontrollor');
+    const allStaff = profiles;
 
     const timeSlots = ['08:00', '12:30', '16:45', '20:15'];
     const tempLogs = [];
@@ -81,7 +85,10 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
         status = 'safe';
       }
 
-      const randomProfile = profiles[Math.floor(Math.random() * profiles.length)];
+      // 70% of temperature readings by managers
+      const useManager = Math.random() < 0.7 && managers.length > 0;
+      const staffPool = useManager ? managers : allStaff;
+      const randomProfile = staffPool[Math.floor(Math.random() * staffPool.length)];
 
       tempLogs.push({
         equipment_id: item.id,
@@ -140,16 +147,28 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const dateObj = new Date(date + 'T12:00:00');
     const dayOfWeek = dateObj.getDay();
 
+    // Hygiene checks only for managers
     let selectedEmployees;
     if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      const numEmployees = Math.floor(Math.random() * 2) + 2;
-      const shuffledProfiles = [...profiles].sort(() => Math.random() - 0.5);
-      selectedEmployees = shuffledProfiles.slice(0, numEmployees);
+      // Monday-Thursday: 2 employees (prefer managers)
+      const numEmployees = 2;
+      const shuffled = managers.length >= numEmployees
+        ? [...managers].sort(() => Math.random() - 0.5)
+        : [...allStaff].sort(() => Math.random() - 0.5);
+      selectedEmployees = shuffled.slice(0, numEmployees);
     } else {
-      selectedEmployees = profiles;
+      // Friday-Sunday: 3-4 employees (prefer managers first)
+      const numEmployees = Math.floor(Math.random() * 2) + 3;
+      const shuffled = [...allStaff].sort(() => Math.random() - 0.5);
+      selectedEmployees = shuffled.slice(0, numEmployees);
     }
 
-    for (const employee of selectedEmployees) {
+    // Ensure only managers in hygiene checks
+    const hygieneEmployees = selectedEmployees.filter(e =>
+      e.role === 'daglig_leder' || e.role === 'kontrollor'
+    );
+
+    for (const employee of hygieneEmployees) {
       const allOk = Math.random() > 0.1;
       hygieneChecks.push({
         check_date: date,

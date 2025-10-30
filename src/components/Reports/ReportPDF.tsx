@@ -67,16 +67,14 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
   const completedCleaning = cleaningLogs?.filter(l => l.status === 'completed').length || 0;
   const totalCleaning = cleaningLogs?.length || 0;
 
-  const employeeNames = new Set<string>();
-  tempLogs?.forEach(log => {
-    if (log.employees?.name) employeeNames.add(log.employees.name);
+  // Use hygiene checks to determine managers (only managers have hygiene checks)
+  const managerNames = new Set<string>();
+  hygieneChecks?.forEach(check => {
+    if (check.staff_name) managerNames.add(check.staff_name);
   });
-  cleaningLogs?.forEach(log => {
-    if (log.employees?.name) employeeNames.add(log.employees.name);
-  });
-  const employees = Array.from(employeeNames);
-  const supervisor = employees[0] || 'Ikke tildelt';
-  const manager = employees[1] || employees[0] || 'Ikke tildelt';
+  const managers = Array.from(managerNames);
+  const supervisor = managers[0] || 'Ikke tildelt';
+  const manager = managers[1] || managers[0] || 'Ikke tildelt';
 
   return (
     <>
