@@ -132,14 +132,14 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
               <div className="text-lg font-semibold text-slate-900 mt-1">{formatDate(report.report_date)}</div>
             </div>
             <div>
-              <div className="text-sm text-slate-600 font-medium">🕐 Generert</div>
+              <div className="text-sm text-slate-600 font-medium">📝 Utarbeidet</div>
               <div className="text-lg font-semibold text-slate-900 mt-1">
-                {new Date(report.generated_at).toLocaleString('nb-NO')}
+                {formatDate(report.report_date)}
               </div>
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">🏢 Bedrift</div>
-              <div className="text-lg font-semibold text-slate-900 mt-1">LA kokido</div>
+              <div className="text-lg font-semibold text-slate-900 mt-1">Amigos Lakokido AS</div>
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">📊 Status</div>
@@ -382,30 +382,34 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
           <div className="border-t-2 border-slate-300 pt-6 mt-8">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">Underskrifter</h3>
-              <p className="text-sm text-slate-600 mb-4">Dette dokumentet er utarbeidet av følgende ansatte:</p>
+              <p className="text-sm text-slate-600 mb-4">Dette dokumentet er utarbeidet av følgende ledere:</p>
             </div>
             <div className="grid grid-cols-2 gap-8">
-              <div>
-                <div className="text-sm text-slate-600 mb-2">Underskrift ansvarlig:</div>
-                <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
-                  <span className="text-slate-700 font-medium italic">{supervisor}</span>
+              {supervisor && supervisor !== 'Ikke tildelt' && (
+                <div>
+                  <div className="text-sm text-slate-600 mb-2">Underskrift Daglig leder/Kontrollør:</div>
+                  <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
+                    <span className="text-slate-700 font-medium italic">{supervisor}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
                 </div>
-                <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
-              </div>
-              <div>
-                <div className="text-sm text-slate-600 mb-2">Underskrift kontrollør/Leder:</div>
-                <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
-                  <span className="text-slate-700 font-medium italic">{manager}</span>
+              )}
+              {manager && manager !== 'Ikke tildelt' && manager !== supervisor && (
+                <div>
+                  <div className="text-sm text-slate-600 mb-2">Underskrift Daglig leder/Kontrollør:</div>
+                  <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
+                    <span className="text-slate-700 font-medium italic">{manager}</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
                 </div>
-                <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
-              </div>
+              )}
             </div>
           </div>
 
           <div className="mt-8 text-center text-xs text-slate-500 border-t pt-4">
-            <p>Dette dokumentet er utarbeidet av ansatte og kontrollører i GE AMIGOS AS</p>
+            <p>Dette dokumentet er utarbeidet av ledere og kontrollører i Amigos Lakokido AS</p>
             <p className="mt-1 font-semibold text-slate-600">HACCP-Amigos System v1.0.0</p>
-            <p className="mt-1">For spørsmål, kontakt: amigospizzaas@gmail.com</p>
+            <p className="mt-1">For spørsmål, kontakt: amigoslakokido@gmail.com</p>
           </div>
         </div>
       </div>
