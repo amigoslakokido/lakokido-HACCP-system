@@ -169,23 +169,21 @@ export function ReportsList() {
       console.log('🧹 Cleaning logs loaded:', cleaningLogs?.length || 0, 'records');
       if (cleaningError) console.error('❌ Cleaning logs error:', cleaningError);
 
-      const { data: hygieneChecks } = await supabase
+      const { data: hygieneChecks, error: hygieneError } = await supabase
         .from('hygiene_checks')
-        .select(`
-          *,
-          employees:checked_by (id, name),
-          employees:checker_id (id, name)
-        `)
+        .select('*')
         .eq('check_date', report.report_date);
 
       console.log('🧼 Hygiene checks loaded:', hygieneChecks?.length || 0, 'records');
+      if (hygieneError) console.error('❌ Hygiene checks error:', hygieneError);
 
-      const { data: coolingLogs } = await supabase
+      const { data: coolingLogs, error: coolingError } = await supabase
         .from('cooling_logs')
-        .select('*, employees:recorded_by (id, name)')
+        .select('*')
         .eq('log_date', report.report_date);
 
       console.log('❄️ Cooling logs loaded:', coolingLogs?.length || 0, 'records');
+      if (coolingError) console.error('❌ Cooling logs error:', coolingError);
 
       const details = { tempLogs, cleaningLogs, hygieneChecks, coolingLogs };
       console.log('📦 Setting report details:', details);

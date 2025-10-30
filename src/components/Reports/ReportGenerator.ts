@@ -33,6 +33,18 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       throw new Error('Mangler nødvendige data for å generere rapport');
     }
 
+    // Count existing reports to determine violation frequency
+    const { count: totalReports } = await supabase
+      .from('daily_reports')
+      .select('*', { count: 'exact', head: true });
+
+    const reportNumber = (totalReports || 0) + 1;
+
+    // Critical violations: 1-2 every 6 reports
+    const shouldHaveCriticalViolation = reportNumber % 6 === 0 || reportNumber % 6 === 3;
+    // Warning violations: 1-2 every 4 reports
+    const shouldHaveWarningViolation = reportNumber % 4 === 0 || reportNumber % 4 === 2;
+
     // Separate managers (daglig_leder + kontrollor) from regular staff
     const managers = profiles.filter(p => p.role === 'daglig_leder' || p.role === 'kontrollor');
     const allStaff = profiles;
@@ -43,8 +55,10 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const hygieneChecks = [];
     const coolingLogs = [];
 
-    let violationsAdded = 0;
-    const maxViolations = Math.min(violationCount, 5);
+    let criticalViolationsAdded = 0;
+    let warningViolationsAdded = 0;
+    const maxCriticalViolations = shouldHaveCriticalViolation ? (Math.random() < 0.5 ? 1 : 2) : 0;
+    const maxWarningViolations = shouldHaveWarningViolation ? (Math.random() < 0.5 ? 1 : 2) : 0;
 
     for (const item of items) {
       const minTemp = parseFloat(item.min_temp);
@@ -54,29 +68,33 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       let temp: number;
       let status: 'safe' | 'warning' | 'danger';
 
-      const shouldViolate = includeViolations &&
-                          violationsAdded < maxViolations &&
-                          Math.random() < 0.3;
+      // Try critical violation first
+      const shouldHaveCritical = includeViolations &&
+                                criticalViolationsAdded < maxCriticalViolations &&
+                                Math.random() < 0.4;
 
-      if (shouldViolate) {
-        const violationType = Math.random() < 0.5 ? 'warning' : 'danger';
+      // Then try warning violation
+      const shouldHaveWarning = !shouldHaveCritical &&
+                               includeViolations &&
+                               warningViolationsAdded < maxWarningViolations &&
+                               Math.random() < 0.4;
 
-        if (violationType === 'danger') {
-          if (minTemp < 0) {
-            temp = parseFloat((maxTemp + 2 + Math.random() * 3).toFixed(1));
-          } else {
-            temp = parseFloat((minTemp - 3 - Math.random() * 4).toFixed(1));
-          }
-          status = 'danger';
+      if (shouldHaveCritical) {
+        if (minTemp < 0) {
+          temp = parseFloat((maxTemp + 2 + Math.random() * 3).toFixed(1));
         } else {
-          if (Math.random() < 0.5) {
-            temp = parseFloat((minTemp - 1 - Math.random() * 2).toFixed(1));
-          } else {
-            temp = parseFloat((maxTemp + 1 + Math.random() * 2).toFixed(1));
-          }
-          status = 'warning';
+          temp = parseFloat((minTemp - 3 - Math.random() * 4).toFixed(1));
         }
-        violationsAdded++;
+        status = 'danger';
+        criticalViolationsAdded++;
+      } else if (shouldHaveWarning) {
+        if (Math.random() < 0.5) {
+          temp = parseFloat((minTemp - 1 - Math.random() * 2).toFixed(1));
+        } else {
+          temp = parseFloat((maxTemp + 1 + Math.random() * 2).toFixed(1));
+        }
+        status = 'warning';
+        warningViolationsAdded++;
       } else {
         const range = maxTemp - minTemp;
         const safeRange = range * 0.7;
@@ -195,10 +213,13 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const shuffledProducts = [...productTypes].sort(() => Math.random() - 0.5);
     const selectedProducts = shuffledProducts.slice(0, numCoolingItems);
 
+    let coolingViolationsAdded = 0;
+    const maxCoolingViolations = shouldHaveCriticalViolation || shouldHaveWarningViolation ? 1 : 0;
+
     for (const product of selectedProducts) {
       const shouldViolate = includeViolations &&
-                           violationsAdded < maxViolations &&
-                           Math.random() < 0.25;
+                           coolingViolationsAdded < maxCoolingViolations &&
+                           Math.random() < 0.4;
 
       let initialTemp: number;
       let finalTemp: number;
@@ -218,7 +239,7 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
           withinLimits = false;
         }
 
-        violationsAdded++;
+        coolingViolationsAdded++;
       } else {
         initialTemp = parseFloat((65 + Math.random() * 15).toFixed(1));
         finalTemp = parseFloat((2 + Math.random() * 5).toFixed(1));
