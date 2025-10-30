@@ -11,20 +11,23 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
 
   try {
     const { data: zones } = await supabase
-      .from('temperature_zones')
+      .from('zones')
       .select('*');
 
     const { data: items } = await supabase
-      .from('temperature_items')
-      .select('*, temperature_zones(*)');
+      .from('equipment')
+      .select('*, zones(*)')
+      .eq('active', true);
 
     const { data: tasks } = await supabase
       .from('cleaning_tasks')
-      .select('*');
+      .select('*')
+      .eq('active', true);
 
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('*');
+      .from('employees')
+      .select('*')
+      .eq('active', true);
 
     if (!items || !tasks || !profiles || profiles.length === 0) {
       throw new Error('Mangler nødvendige data for å generere rapport');
@@ -40,7 +43,7 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const maxViolations = Math.min(violationCount, 5); // Max 5 violations to keep reports in safe/warning range
 
     for (const item of items) {
-      const zone = item.temperature_zones;
+      const zone = item.zones;
       if (!zone) continue;
 
       // Single recording per item per day (like dishwasher)
@@ -89,12 +92,13 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       const randomProfile = profiles[Math.floor(Math.random() * profiles.length)];
 
       tempLogs.push({
-        item_id: item.id,
-        recorded_temp: temp,
-        recorded_date: date,
-        recorded_time: time,
+        equipment_id: item.id,
+        temperature: temp,
+        log_date: date,
+        log_time: time,
         status: status,
         recorded_by: randomProfile.id,
+        notes: '',
       });
     }
 
@@ -123,10 +127,10 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       cleaningLogs.push({
         task_id: task.id,
         log_date: date,
-        is_completed: shouldComplete,
+        log_time: time,
+        status: shouldComplete ? 'completed' : 'incomplete',
         notes: notes,
         completed_by: randomProfile.id,
-        completed_at: shouldComplete ? `${date}T${time}:00` : null,
       });
     }
 
@@ -272,12 +276,15 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       .eq('report_date', date)
       .maybeSingle();
 
+    // Get first employee as generator
+    const generatorId = profiles[0].id;
+
     if (existingReport) {
       const { data: report } = await supabase
         .from('daily_reports')
         .update({
           overall_status: overallStatus,
-          generated_at: new Date().toISOString(),
+          generated_by: generatorId,
         })
         .eq('id', existingReport.id)
         .select()
@@ -290,6 +297,8 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
         .insert({
           report_date: date,
           overall_status: overallStatus,
+          generated_by: generatorId,
+          content: {},
         })
         .select()
         .single();

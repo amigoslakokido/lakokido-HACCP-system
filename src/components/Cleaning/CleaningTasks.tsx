@@ -21,8 +21,8 @@ export function CleaningTasks() {
       const { data: tasksData } = await supabase
         .from('cleaning_tasks')
         .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
+        .eq('active', true)
+        .order('frequency', { ascending: true });
 
       if (tasksData) {
         setTasks(tasksData);
