@@ -85,5 +85,16 @@ export type DailyReport = {
   overall_status?: 'safe' | 'warning' | 'danger';
 };
 
+export type IncidentAttachment = {
+  id: string;
+  incident_id: string;
+  file_name: string;
+  file_url: string;
+  file_type: string;
+  file_size: number;
+  uploaded_by: string;
+  created_at: string;
+};
+
 export type TemperatureZone = Zone;
 export type TemperatureItem = Equipment;

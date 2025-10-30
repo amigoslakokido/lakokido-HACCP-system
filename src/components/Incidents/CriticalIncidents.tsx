@@ -183,35 +183,37 @@ export function CriticalIncidents() {
     setUploadingFiles(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+      // Get first active employee as default uploader
+      const { data: employees } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('active', true)
+        .limit(1);
+
+      const uploaderId = employees && employees.length > 0
+        ? employees[0].id
+        : '00000000-0000-0000-0000-000000000000';
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${incidentId}/${Date.now()}-${i}.${fileExt}`;
-        const fileType = file.type.startsWith('image/') ? 'image' : 'document';
 
-        // Upload to storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('incident-files')
-          .upload(fileName, file);
+        // Convert file to base64 for simple storage in database
+        const reader = new FileReader();
+        const fileDataUrl = await new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
 
-        if (uploadError) throw uploadError;
+        const fileType = file.type;
 
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('incident-files')
-          .getPublicUrl(fileName);
-
-        // Save attachment record
+        // Save attachment record with embedded data
         await supabase.from('incident_attachments').insert({
           incident_id: incidentId,
           file_name: file.name,
-          file_url: publicUrl,
+          file_url: fileDataUrl, // Store as data URL
           file_type: fileType,
           file_size: file.size,
-          uploaded_by: userId,
+          uploaded_by: uploaderId,
         });
       }
 
@@ -225,27 +227,21 @@ export function CriticalIncidents() {
     }
   }
 
-  async function handleDeleteAttachment(attachmentId: string, fileUrl: string) {
+  async function handleDeleteAttachment(attachmentId: string) {
     if (!confirm('Vil du slette denne filen?')) return;
 
     try {
-      // Extract file path from URL
-      const fileName = fileUrl.split('/incident-files/')[1];
-
-      // Delete from storage
-      await supabase.storage
-        .from('incident-files')
-        .remove([fileName]);
-
-      // Delete record
+      // Delete record from database
       await supabase
         .from('incident_attachments')
         .delete()
         .eq('id', attachmentId);
 
       loadAttachments(selectedIncident!.id);
+      alert('Fil slettet');
     } catch (error) {
       console.error('Delete error:', error);
+      alert('Det oppstod en feil ved sletting');
     }
   }
 
@@ -611,7 +607,7 @@ export function CriticalIncidents() {
                           </div>
                         </div>
                         <button
-                          onClick={() => handleDeleteAttachment(attachment.id, attachment.file_url)}
+                          onClick={() => handleDeleteAttachment(attachment.id)}
                           className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
