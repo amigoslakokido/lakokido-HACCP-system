@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react';
 import { supabase, Zone, Equipment, CleaningTask, Employee } from '../../lib/supabase';
-import { Settings, Plus, Edit2, Trash2, Save, X, Users, Thermometer, Briefcase } from 'lucide-react';
+import { Settings, Plus, Edit2, Trash2, Save, X, Users, Thermometer, Briefcase, Clock } from 'lucide-react';
+
+interface ScheduledReportConfig {
+  id: string;
+  is_enabled: boolean;
+  schedule_time: string;
+  last_run: string | null;
+  next_run: string | null;
+}
 
 export function SettingsModule() {
   const [zones, setZones] = useState<(Zone & { equipment: Equipment[] })[]>([]);
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [scheduleConfig, setScheduleConfig] = useState<ScheduledReportConfig | null>(null);
+  const [isScheduleEnabled, setIsScheduleEnabled] = useState(true);
+  const [scheduleTime, setScheduleTime] = useState('23:00');
+  const [savingSchedule, setSavingSchedule] = useState(false);
 
   const [addingZone, setAddingZone] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
@@ -45,7 +58,51 @@ export function SettingsModule() {
 
   useEffect(() => {
     loadData();
+    loadScheduleConfig();
   }, []);
+
+  const loadScheduleConfig = async () => {
+    try {
+      const { data } = await supabase
+        .from('scheduled_reports_config')
+        .select('*')
+        .maybeSingle();
+
+      if (data) {
+        setScheduleConfig(data);
+        setIsScheduleEnabled(data.is_enabled);
+        setScheduleTime(data.schedule_time.substring(0, 5));
+      }
+    } catch (error) {
+      console.error('Error loading schedule config:', error);
+    }
+  };
+
+  const updateScheduleConfig = async () => {
+    if (!scheduleConfig) return;
+
+    setSavingSchedule(true);
+    try {
+      const { data } = await supabase
+        .from('scheduled_reports_config')
+        .update({
+          is_enabled: isScheduleEnabled,
+          schedule_time: scheduleTime + ':00',
+        })
+        .eq('id', scheduleConfig.id)
+        .select()
+        .single();
+
+      if (data) {
+        setScheduleConfig(data);
+      }
+    } catch (error) {
+      console.error('Error updating schedule config:', error);
+      alert('Det oppstod en feil ved oppdatering av innstillingene');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -863,6 +920,73 @@ export function SettingsModule() {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-slate-600" />
+            <h3 className="font-semibold text-slate-900">Daglig rapport - Planlegging</h3>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="bg-slate-50 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-semibold text-slate-900">Opprett daglig rapport hver dag</div>
+                <div className="text-sm text-slate-600">Rapporten vil bli opprettet hvis ingen manuell rapport allerede finnes</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isScheduleEnabled}
+                  onChange={(e) => setIsScheduleEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Tid for utførelse</label>
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                disabled={!isScheduleEnabled}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            {scheduleConfig?.last_run && (
+              <div className="text-xs text-slate-600">
+                Sist kjørt: {new Date(scheduleConfig.last_run).toLocaleString('nb-NO', {
+                  dateStyle: 'short',
+                  timeStyle: 'short'
+                })}
+              </div>
+            )}
+
+            <button
+              onClick={updateScheduleConfig}
+              disabled={savingSchedule}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {savingSchedule ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Lagrer...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Lagre innstillinger
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
