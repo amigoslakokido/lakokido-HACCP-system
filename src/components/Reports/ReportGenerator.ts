@@ -40,13 +40,12 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     const coolingLogs = [];
 
     let violationsAdded = 0;
-    const maxViolations = Math.min(violationCount, 5); // Max 5 violations to keep reports in safe/warning range
+    const maxViolations = Math.min(violationCount, 5);
 
     for (const item of items) {
       const zone = item.zones;
       if (!zone) continue;
 
-      // Single recording per item per day (like dishwasher)
       const time = timeSlots[Math.floor(Math.random() * timeSlots.length)];
       let temp: number;
       let status: 'safe' | 'warning' | 'danger';
@@ -59,29 +58,22 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
         const violationType = Math.random() < 0.5 ? 'warning' : 'danger';
 
         if (violationType === 'danger') {
-          // Critical violation - temperature significantly outside safe range
           if (zone.min_temp < 0) {
-            // For cold zones (freezer, receiving): too warm is dangerous
             temp = parseFloat((zone.max_temp + 2 + Math.random() * 3).toFixed(1));
           } else {
-            // For hot zones (dishwasher, serving): too cool is dangerous
             temp = parseFloat((zone.min_temp - 3 - Math.random() * 4).toFixed(1));
           }
           status = 'danger';
         } else {
-          // Minor violation - slightly outside safe range
           if (Math.random() < 0.5) {
-            // Slightly below minimum (reasonable deviation)
             temp = parseFloat((zone.min_temp - 1 - Math.random() * 2).toFixed(1));
           } else {
-            // Slightly above maximum (reasonable deviation)
             temp = parseFloat((zone.max_temp + 1 + Math.random() * 2).toFixed(1));
           }
           status = 'warning';
         }
         violationsAdded++;
       } else {
-        // Safe temperature - well within acceptable range
         const range = zone.max_temp - zone.min_temp;
         const safeRange = range * 0.7;
         const offset = range * 0.15;
@@ -109,10 +101,8 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
 
       let notes = '';
       if (!shouldComplete) {
-        // Task not completed - add reason
         notes = ['Mangler tid', 'Utstyr ikke tilgjengelig', 'Planlagt senere'][Math.floor(Math.random() * 3)];
       } else {
-        // Task completed - add simple confirmation comment
         const completedComments = [
           'Utført som planlagt',
           'Gjennomført OK',
@@ -134,7 +124,6 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       });
     }
 
-    // Delete existing logs for this date to prevent duplicates
     await supabase.from('temperature_logs').delete().eq('log_date', date);
     await supabase.from('cleaning_logs').delete().eq('log_date', date);
     await supabase.from('hygiene_checks').delete().eq('check_date', date);
@@ -148,36 +137,27 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       await supabase.from('cleaning_logs').insert(cleaningLogs);
     }
 
-    // Generate hygiene checks based on day of week
-    // Monday-Thursday: 2-3 employees, Friday-Sunday: all employees
     const dateObj = new Date(date + 'T12:00:00');
-    const dayOfWeek = dateObj.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    const dayOfWeek = dateObj.getDay();
 
     let selectedEmployees;
     if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      // Monday-Thursday: 2-3 random employees
-      const numEmployees = Math.floor(Math.random() * 2) + 2; // 2 or 3
+      const numEmployees = Math.floor(Math.random() * 2) + 2;
       const shuffledProfiles = [...profiles].sort(() => Math.random() - 0.5);
       selectedEmployees = shuffledProfiles.slice(0, numEmployees);
     } else {
-      // Friday-Sunday: all employees
       selectedEmployees = profiles;
     }
-
-    const hygieneTime = timeSlots[Math.floor(Math.random() * timeSlots.length)];
 
     for (const employee of selectedEmployees) {
       const allOk = Math.random() > 0.1;
       hygieneChecks.push({
         check_date: date,
-        checked_by: employee.id,
-        checker_id: profiles[Math.floor(Math.random() * profiles.length)].id,
-        uniform_ok: allOk || Math.random() > 0.2,
-        gloves_ok: allOk || Math.random() > 0.2,
-        handwashing_ok: allOk || Math.random() > 0.1,
-        nails_ok: allOk || Math.random() > 0.2,
-        hair_ok: allOk || Math.random() > 0.2,
-        overall_status: allOk ? 'OK' : 'Ikke OK',
+        staff_name: employee.name,
+        uniform_clean: allOk || Math.random() > 0.2,
+        hands_washed: allOk || Math.random() > 0.1,
+        jewelry_removed: allOk || Math.random() > 0.2,
+        illness_free: allOk || Math.random() > 0.1,
         notes: allOk ? 'Alt i orden' : 'Se merknader'
       });
     }
@@ -186,71 +166,66 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       await supabase.from('hygiene_checks').insert(hygieneChecks);
     }
 
-    // Generate cooling logs (2-3 items per day)
     const productTypes = [
       { type: 'Kebabkjøtt', name: 'Fersk kebabkjøtt' },
       { type: 'Kyllingkjøtt', name: 'Grillet kylling' },
       { type: 'Kjøttsaus', name: 'Tomatkjøttsaus' }
     ];
 
-    const numCoolingItems = Math.floor(Math.random() * 2) + 2; // 2-3 items
+    const numCoolingItems = Math.floor(Math.random() * 2) + 2;
     const shuffledProducts = [...productTypes].sort(() => Math.random() - 0.5);
     const selectedProducts = shuffledProducts.slice(0, numCoolingItems);
 
     for (const product of selectedProducts) {
-      const randomProfile = profiles[Math.floor(Math.random() * profiles.length)];
-
-      // Simulate cooling process according to Mattilsynet rules
       const shouldViolate = includeViolations &&
                            violationsAdded < maxViolations &&
                            Math.random() < 0.25;
 
-      let tempInitial: number;
-      let temp2h: number;
-      let temp6h: number;
+      let initialTemp: number;
+      let finalTemp: number;
+      let withinLimits: boolean;
       let notes = '';
 
       if (shouldViolate) {
-        // Create violation scenario
-        const violationType = Math.random() < 0.5 ? 'stage1' : 'stage2';
+        initialTemp = parseFloat((65 + Math.random() * 10).toFixed(1));
 
-        tempInitial = parseFloat((65 + Math.random() * 10).toFixed(1)); // 65-75°C
-
-        if (violationType === 'stage1') {
-          // Fail Stage 1: temp after 2h > 20°C
-          temp2h = parseFloat((22 + Math.random() * 8).toFixed(1)); // 22-30°C
-          temp6h = parseFloat((8 + Math.random() * 4).toFixed(1)); // 8-12°C
-          notes = 'Ikke godkjent – Stage 1 mislykket';
+        if (Math.random() < 0.5) {
+          finalTemp = parseFloat((22 + Math.random() * 8).toFixed(1));
+          notes = 'Ikke godkjent – For langsom nedkjøling';
+          withinLimits = false;
         } else {
-          // Fail Stage 2: temp after 6h > 10°C
-          temp2h = parseFloat((15 + Math.random() * 4).toFixed(1)); // 15-19°C
-          temp6h = parseFloat((11 + Math.random() * 5).toFixed(1)); // 11-16°C
-          notes = 'Ikke godkjent – Stage 2 mislykket. Mat må kasseres';
+          finalTemp = parseFloat((11 + Math.random() * 5).toFixed(1));
+          notes = 'Ikke godkjent – Må kasseres';
+          withinLimits = false;
         }
 
         violationsAdded++;
       } else {
-        // Safe cooling process
-        tempInitial = parseFloat((65 + Math.random() * 15).toFixed(1)); // 65-80°C
-        temp2h = parseFloat((12 + Math.random() * 6).toFixed(1)); // 12-18°C
-        temp6h = parseFloat((2 + Math.random() * 5).toFixed(1)); // 2-7°C
+        initialTemp = parseFloat((65 + Math.random() * 15).toFixed(1));
+        finalTemp = parseFloat((2 + Math.random() * 5).toFixed(1));
+        withinLimits = true;
 
-        if (temp6h <= 4 && temp2h <= 15) {
+        if (finalTemp <= 4) {
           notes = 'Utmerket nedkjøling';
         } else {
           notes = 'Godkjent nedkjøling';
         }
       }
 
+      const startTime = timeSlots[Math.floor(Math.random() * timeSlots.length)];
+      const startHour = parseInt(startTime.split(':')[0]);
+      const endHour = (startHour + 6) % 24;
+      const endTime = `${endHour.toString().padStart(2, '0')}:${startTime.split(':')[1]}`;
+
       coolingLogs.push({
         log_date: date,
         product_type: product.type,
         product_name: product.name,
-        temp_initial: tempInitial,
-        temp_2h: temp2h,
-        temp_6h: temp6h,
-        total_duration_hours: 6,
-        recorded_by: randomProfile.id,
+        initial_temp: initialTemp,
+        final_temp: finalTemp,
+        start_time: startTime,
+        end_time: endTime,
+        within_limits: withinLimits,
         notes: notes
       });
     }
@@ -259,10 +234,6 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       await supabase.from('cooling_logs').insert(coolingLogs);
     }
 
-    // Calculate overall status based on violation count
-    // 5+ violations = danger (critical)
-    // 3-4 violations = warning (moderate)
-    // 0-2 violations = safe (good)
     const totalViolations = tempLogs.filter(l => l.status === 'danger' || l.status === 'warning').length;
     const overallStatus = totalViolations >= 5
       ? 'danger'
@@ -276,7 +247,6 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       .eq('report_date', date)
       .maybeSingle();
 
-    // Get first employee as generator
     const generatorId = profiles[0].id;
 
     if (existingReport) {
