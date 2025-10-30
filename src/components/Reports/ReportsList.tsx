@@ -144,7 +144,9 @@ export function ReportsList() {
           *,
           equipment (
             name,
-            zones (name, min_temp, max_temp)
+            min_temp,
+            max_temp,
+            zones (name)
           ),
           employees:recorded_by (name)
         `)
@@ -159,7 +161,7 @@ export function ReportsList() {
         .select(`
           *,
           cleaning_tasks (task_name, frequency),
-          employees:recorded_by (name)
+          employees:completed_by (name)
         `)
         .eq('log_date', report.report_date)
         .order('log_time', { ascending: true });
@@ -250,7 +252,9 @@ export function ReportsList() {
           *,
           equipment (
             name,
-            zones (name, min_temp, max_temp)
+            min_temp,
+            max_temp,
+            zones (name)
           ),
           employees:recorded_by (name)
         `)
@@ -262,23 +266,19 @@ export function ReportsList() {
         .select(`
           *,
           cleaning_tasks (task_name, frequency),
-          employees:recorded_by (name)
+          employees:completed_by (name)
         `)
         .eq('log_date', report.report_date)
         .order('log_time', { ascending: true });
 
       const { data: hygieneChecks } = await supabase
         .from('hygiene_checks')
-        .select(`
-          *,
-          employees:checked_by (id, name),
-          employees:checker_id (id, name)
-        `)
+        .select('*')
         .eq('check_date', report.report_date);
 
       const { data: coolingLogs } = await supabase
         .from('cooling_logs')
-        .select('*, employees:recorded_by (id, name)')
+        .select('*')
         .eq('log_date', report.report_date);
 
       const tempDiv = document.createElement('div');
@@ -376,7 +376,9 @@ export function ReportsList() {
           *,
           equipment (
             name,
-            zones (name, min_temp, max_temp)
+            min_temp,
+            max_temp,
+            zones (name)
           ),
           employees:recorded_by (name)
         `)
@@ -388,7 +390,7 @@ export function ReportsList() {
         .select(`
           *,
           cleaning_tasks (task_name, frequency, description),
-          employees:recorded_by (name)
+          employees:completed_by (name)
         `)
         .eq('log_date', report.report_date)
         .order('log_time', { ascending: true });
