@@ -20,7 +20,6 @@ Deno.serve(async (req: Request) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // التحقق من إعدادات الجدولة
     const { data: config } = await supabase
       .from("scheduled_reports_config")
       .select("*")
@@ -36,10 +35,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // التحقق من تاريخ اليوم
     const today = new Date().toISOString().split("T")[0];
 
-    // التحقق إذا كان هناك تقرير لليوم
     const { data: existingReport } = await supabase
       .from("daily_reports")
       .select("id")
@@ -56,7 +53,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // جلب البيانات المطلوبة
     const { data: zones } = await supabase.from("zones").select("*");
     const { data: items } = await supabase
       .from("equipment")
@@ -108,7 +104,6 @@ Deno.serve(async (req: Request) => {
         : 2
       : 0;
 
-    // Temperature logs
     for (const item of items) {
       const minTemp = parseFloat(item.min_temp);
       const maxTemp = parseFloat(item.max_temp);
@@ -124,18 +119,18 @@ Deno.serve(async (req: Request) => {
         Math.random() < 0.4;
 
       if (shouldHaveCritical) {
-        if (minTemp < 0) {
-          temp = parseFloat((maxTemp + 2 + Math.random() * 3).toFixed(1));
+        if (Math.random() < 0.5) {
+          temp = parseFloat((maxTemp + 2 + Math.random() * 2).toFixed(1));
         } else {
-          temp = parseFloat((minTemp - 3 - Math.random() * 4).toFixed(1));
+          temp = parseFloat((minTemp - 2 - Math.random() * 2).toFixed(1));
         }
         status = "danger";
         criticalViolationsAdded++;
       } else if (shouldHaveWarning) {
         if (Math.random() < 0.5) {
-          temp = parseFloat((minTemp - 1 - Math.random() * 2).toFixed(1));
+          temp = parseFloat((minTemp - 0.5 - Math.random() * 1.5).toFixed(1));
         } else {
-          temp = parseFloat((maxTemp + 1 + Math.random() * 2).toFixed(1));
+          temp = parseFloat((maxTemp + 0.5 + Math.random() * 1.5).toFixed(1));
         }
         status = "warning";
         warningViolationsAdded++;
@@ -162,7 +157,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Cleaning logs
     for (const task of tasks) {
       const shouldComplete = Math.random() > 0.1;
       const time = timeSlots[Math.floor(Math.random() * timeSlots.length)];
@@ -195,7 +189,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Hygiene checks
     const dateObj = new Date(today + "T12:00:00");
     const dayOfWeek = dateObj.getDay();
 
@@ -230,7 +223,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Cooling logs
     const productTypes = [
       { type: "Kebabkjøtt", name: "Fersk kebabkjøtt" },
       { type: "Kyllingkjøtt", name: "Grillet kylling" },
@@ -298,7 +290,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Insert all logs
     if (tempLogs.length > 0) {
       await supabase.from("temperature_logs").insert(tempLogs);
     }
@@ -312,14 +303,12 @@ Deno.serve(async (req: Request) => {
       await supabase.from("cooling_logs").insert(coolingLogs);
     }
 
-    // Calculate overall status
     const totalViolations = tempLogs.filter(
       (l: any) => l.status === "danger" || l.status === "warning"
     ).length;
     const overallStatus =
       totalViolations >= 5 ? "danger" : totalViolations >= 3 ? "warning" : "safe";
 
-    // Create daily report
     const generatorId = profiles[0].id;
     const { data: report } = await supabase
       .from("daily_reports")
@@ -332,7 +321,6 @@ Deno.serve(async (req: Request) => {
       .select()
       .single();
 
-    // Update last_run
     await supabase
       .from("scheduled_reports_config")
       .update({

@@ -80,18 +80,18 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
                                Math.random() < 0.4;
 
       if (shouldHaveCritical) {
-        if (minTemp < 0) {
-          temp = parseFloat((maxTemp + 2 + Math.random() * 3).toFixed(1));
+        if (Math.random() < 0.5) {
+          temp = parseFloat((maxTemp + 2 + Math.random() * 2).toFixed(1));
         } else {
-          temp = parseFloat((minTemp - 3 - Math.random() * 4).toFixed(1));
+          temp = parseFloat((minTemp - 2 - Math.random() * 2).toFixed(1));
         }
         status = 'danger';
         criticalViolationsAdded++;
       } else if (shouldHaveWarning) {
         if (Math.random() < 0.5) {
-          temp = parseFloat((minTemp - 1 - Math.random() * 2).toFixed(1));
+          temp = parseFloat((minTemp - 0.5 - Math.random() * 1.5).toFixed(1));
         } else {
-          temp = parseFloat((maxTemp + 1 + Math.random() * 2).toFixed(1));
+          temp = parseFloat((maxTemp + 0.5 + Math.random() * 1.5).toFixed(1));
         }
         status = 'warning';
         warningViolationsAdded++;
