@@ -60,7 +60,7 @@ export function SettingsModule() {
   const [newEmail, setNewEmail] = useState('');
   const [savingNotifications, setSavingNotifications] = useState(false);
 
-  const [soundType, setSoundType] = useState<'bell' | 'chime' | 'alert' | 'alarm' | 'gentle' | 'urgent' | 'siren' | 'loud_beep'>('siren');
+  const [soundType, setSoundType] = useState<'bell' | 'chime' | 'alert' | 'alarm' | 'gentle' | 'urgent' | 'siren' | 'loud_beep' | 'voice_ar' | 'voice_no'>('siren');
   const [soundVolume, setSoundVolume] = useState(80);
   const [soundRepeat, setSoundRepeat] = useState(3);
   const [soundInterval, setSoundInterval] = useState(2);
