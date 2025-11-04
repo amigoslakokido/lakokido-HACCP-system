@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { CheckCircle2, XCircle, ChevronLeft, ChevronRight, Settings, Sparkles, User, MessageSquare, Bell, BellRing, AlertTriangle, FileText, Save } from 'lucide-react';
 import TaskManagement from './TaskManagement';
 import { playSound } from '../../utils/notificationSounds';
+import { QRCodeDisplay } from '../Dashboard/QRCodeDisplay';
 
 interface RoutineTask {
   id: string;
@@ -979,6 +980,11 @@ export default function DailyRoutine() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* QR Code for Mobile Access */}
+        <div className="mb-4">
+          <QRCodeDisplay />
         </div>
 
         {/* Main Task Card */}
