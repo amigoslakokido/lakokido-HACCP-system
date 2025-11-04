@@ -121,13 +121,13 @@ export default function DailyRoutine() {
     };
     setAlerts(prev => [newAlert, ...prev].slice(0, 5));
 
-    // Visual effects for urgent alerts
+    // EXTREME Visual effects for urgent alerts
     if (type === 'danger') {
       setFlashScreen(true);
-      setTimeout(() => setFlashScreen(false), 500);
+      setTimeout(() => setFlashScreen(false), 2400);
 
       setShakeScreen(true);
-      setTimeout(() => setShakeScreen(false), 600);
+      setTimeout(() => setShakeScreen(false), 2000);
     }
 
     if (type === 'danger' || type === 'warning') {
@@ -776,10 +776,13 @@ export default function DailyRoutine() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8 relative overflow-hidden ${flashScreen ? 'flash-screen' : ''} ${shakeScreen ? 'shake-screen' : ''}`}>
-      {/* Flash Overlay */}
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8 relative overflow-hidden ${flashScreen ? 'flash-multi-color' : ''} ${shakeScreen ? 'shake-extreme' : ''}`}>
+      {/* Flash Overlay - EXTREME */}
       {flashScreen && (
-        <div className="fixed inset-0 z-50 pointer-events-none bg-gradient-to-br from-red-500/40 via-orange-500/40 to-red-500/40 animate-pulse"></div>
+        <>
+          <div className="fixed inset-0 z-50 pointer-events-none bg-gradient-to-br from-red-500/50 via-orange-500/50 to-red-500/50 animate-pulse"></div>
+          <div className="fixed inset-0 z-50 pointer-events-none border-8 animate-border-rainbow"></div>
+        </>
       )}
 
       {/* Animated Background Elements */}
@@ -809,11 +812,11 @@ export default function DailyRoutine() {
           {alerts.map(alert => (
             <div
               key={alert.id}
-              className={`backdrop-blur-xl rounded-2xl shadow-2xl flex items-start gap-3 border-4 ${
+              className={`backdrop-blur-xl rounded-2xl shadow-2xl flex items-start gap-3 border-8 ${
                 alert.type === 'danger'
-                  ? 'bg-red-600/95 border-red-400 text-white animate-pulse-danger animate-glow-danger'
+                  ? 'bg-red-600/95 text-white animate-border-rainbow animate-glow-extreme animate-scale-pulse-extreme'
                   : alert.type === 'warning'
-                  ? 'bg-amber-600/95 border-amber-400 text-white animate-pulse'
+                  ? 'bg-amber-600/95 border-amber-400 text-white animate-pulse animate-glow-danger'
                   : 'bg-blue-600/95 border-blue-400 text-white'
               } ${
                 alertSize === 'small' ? 'p-3' :
@@ -827,7 +830,7 @@ export default function DailyRoutine() {
                 'animate-shake'
               }`}
             >
-              {alert.type === 'danger' && <AlertTriangle className={`animate-pulse flex-shrink-0 ${alertSize === 'small' ? 'w-6 h-6' : alertSize === 'large' ? 'w-10 h-10' : 'w-8 h-8'}`} />}
+              {alert.type === 'danger' && <AlertTriangle className={`animate-rotate-pulse flex-shrink-0 ${alertSize === 'small' ? 'w-6 h-6' : alertSize === 'large' ? 'w-10 h-10' : 'w-8 h-8'}`} />}
               {alert.type === 'warning' && <BellRing className={`animate-bounce flex-shrink-0 ${alertSize === 'small' ? 'w-6 h-6' : alertSize === 'large' ? 'w-10 h-10' : 'w-8 h-8'}`} />}
               {alert.type === 'info' && <Bell className={`flex-shrink-0 ${alertSize === 'small' ? 'w-6 h-6' : alertSize === 'large' ? 'w-10 h-10' : 'w-8 h-8'}`} />}
               <div className="flex-1">

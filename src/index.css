@@ -169,3 +169,195 @@
 .animate-glow-danger {
   animation: glow-danger 1s ease-in-out infinite;
 }
+
+@keyframes flash-multi-color {
+  0% {
+    background-color: transparent;
+  }
+  12.5% {
+    background-color: rgba(239, 68, 68, 0.7);
+  }
+  25% {
+    background-color: rgba(249, 115, 22, 0.7);
+  }
+  37.5% {
+    background-color: rgba(234, 179, 8, 0.7);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.9);
+  }
+  62.5% {
+    background-color: rgba(234, 179, 8, 0.7);
+  }
+  75% {
+    background-color: rgba(249, 115, 22, 0.7);
+  }
+  87.5% {
+    background-color: rgba(239, 68, 68, 0.7);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes shake-extreme {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+  }
+  5% {
+    transform: translateX(-15px) translateY(-5px) rotate(-2deg) scale(1.02);
+  }
+  10% {
+    transform: translateX(15px) translateY(5px) rotate(2deg) scale(0.98);
+  }
+  15% {
+    transform: translateX(-15px) translateY(-5px) rotate(-2deg) scale(1.02);
+  }
+  20% {
+    transform: translateX(15px) translateY(5px) rotate(2deg) scale(0.98);
+  }
+  25% {
+    transform: translateX(-15px) translateY(-5px) rotate(-2deg) scale(1.02);
+  }
+  30% {
+    transform: translateX(15px) translateY(5px) rotate(2deg) scale(0.98);
+  }
+  35% {
+    transform: translateX(-15px) translateY(-5px) rotate(-2deg) scale(1.02);
+  }
+  40% {
+    transform: translateX(15px) translateY(5px) rotate(2deg) scale(0.98);
+  }
+  45% {
+    transform: translateX(-15px) translateY(-5px) rotate(-2deg) scale(1.02);
+  }
+  50% {
+    transform: translateX(15px) translateY(5px) rotate(2deg) scale(0.98);
+  }
+  55% {
+    transform: translateX(-10px) translateY(-3px) rotate(-1deg) scale(1.01);
+  }
+  60% {
+    transform: translateX(10px) translateY(3px) rotate(1deg) scale(0.99);
+  }
+  65% {
+    transform: translateX(-10px) translateY(-3px) rotate(-1deg) scale(1.01);
+  }
+  70% {
+    transform: translateX(10px) translateY(3px) rotate(1deg) scale(0.99);
+  }
+  75% {
+    transform: translateX(-5px) translateY(-2px) rotate(-0.5deg) scale(1.005);
+  }
+  80% {
+    transform: translateX(5px) translateY(2px) rotate(0.5deg) scale(0.995);
+  }
+  85% {
+    transform: translateX(-5px) translateY(-2px) rotate(-0.5deg) scale(1.005);
+  }
+  90% {
+    transform: translateX(5px) translateY(2px) rotate(0.5deg) scale(0.995);
+  }
+}
+
+@keyframes border-rainbow {
+  0% {
+    border-color: #ef4444;
+    box-shadow: 0 0 30px #ef4444, 0 0 60px #ef4444;
+  }
+  16.6% {
+    border-color: #f97316;
+    box-shadow: 0 0 30px #f97316, 0 0 60px #f97316;
+  }
+  33.2% {
+    border-color: #eab308;
+    box-shadow: 0 0 30px #eab308, 0 0 60px #eab308;
+  }
+  49.8% {
+    border-color: #22c55e;
+    box-shadow: 0 0 30px #22c55e, 0 0 60px #22c55e;
+  }
+  66.4% {
+    border-color: #3b82f6;
+    box-shadow: 0 0 30px #3b82f6, 0 0 60px #3b82f6;
+  }
+  83% {
+    border-color: #a855f7;
+    box-shadow: 0 0 30px #a855f7, 0 0 60px #a855f7;
+  }
+  100% {
+    border-color: #ef4444;
+    box-shadow: 0 0 30px #ef4444, 0 0 60px #ef4444;
+  }
+}
+
+@keyframes scale-pulse-extreme {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes rotate-pulse {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(5deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(-5deg) scale(0.9);
+  }
+  75% {
+    transform: rotate(5deg) scale(1.05);
+  }
+}
+
+@keyframes glow-extreme {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8),
+                0 0 40px rgba(239, 68, 68, 0.6),
+                0 0 60px rgba(239, 68, 68, 0.4),
+                0 0 80px rgba(239, 68, 68, 0.2),
+                inset 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(239, 68, 68, 1),
+                0 0 80px rgba(239, 68, 68, 0.8),
+                0 0 120px rgba(239, 68, 68, 0.6),
+                0 0 160px rgba(239, 68, 68, 0.4),
+                inset 0 0 40px rgba(239, 68, 68, 0.5);
+  }
+}
+
+.flash-multi-color {
+  animation: flash-multi-color 0.8s ease-in-out 3;
+}
+
+.shake-extreme {
+  animation: shake-extreme 1s ease-in-out 2;
+}
+
+.animate-border-rainbow {
+  animation: border-rainbow 2s linear infinite;
+}
+
+.animate-scale-pulse-extreme {
+  animation: scale-pulse-extreme 0.5s ease-in-out infinite;
+}
+
+.animate-rotate-pulse {
+  animation: rotate-pulse 0.5s ease-in-out infinite;
+}
+
+.animate-glow-extreme {
+  animation: glow-extreme 0.6s ease-in-out infinite;
+}
