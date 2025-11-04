@@ -225,30 +225,29 @@ export function SettingsModule() {
   };
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === 'adminstrasjon') {
+    console.log('Password entered:', passwordInput);
+    console.log('Trimmed password:', passwordInput.trim());
+
+    if (passwordInput.trim() === 'adminstrasjon') {
+      console.log('✅ Password correct!');
       setIsLocked(false);
       setPasswordInput('');
       setShowPasswordError(false);
     } else {
+      console.log('❌ Password incorrect. Expected: adminstrasjon, Got:', passwordInput.trim());
       setShowPasswordError(true);
       setTimeout(() => setShowPasswordError(false), 3000);
     }
   };
 
-  const handlePasswordReset = async () => {
-    const email = 'amigoslakokido@gmail.com';
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
-      });
-
-      if (error) throw error;
-
-      alert('تم إرسال رابط إعادة تعيين كلمة السر إلى البريد الإلكتروني\n\nPassordtilbakestillingslenke sendt til e-post');
-    } catch (error) {
-      console.error('Error sending password reset:', error);
-      alert('حدث خطأ في إرسال رابط إعادة التعيين\n\nFeil ved sending av tilbakestillingslenke');
-    }
+  const handlePasswordReset = () => {
+    alert(
+      '📧 للحصول على كلمة السر، تواصل مع:\n\n' +
+      'For å få passordet, kontakt:\n\n' +
+      '📧 amigoslakokido@gmail.com\n\n' +
+      'كلمة السر الافتراضية: adminstrasjon\n' +
+      'Standard passord: adminstrasjon'
+    );
   };
 
   const updateScheduleConfig = async () => {
@@ -663,32 +662,38 @@ export function SettingsModule() {
                 كلمة السر / Passord
               </label>
               <input
-                type="password"
+                type="text"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-lg"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-lg text-center font-bold"
                 placeholder="adminstrasjon"
+                autoFocus
+                autoComplete="off"
               />
               {showPasswordError && (
                 <p className="text-red-600 text-sm mt-2 font-semibold animate-shake">
                   ❌ كلمة السر خاطئة / Feil passord
                 </p>
               )}
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                💡 تلميح: adminstrasjon
+              </p>
             </div>
 
             <button
               onClick={handlePasswordSubmit}
-              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-xl font-black rounded-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+              disabled={!passwordInput.trim()}
+              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-xl font-black rounded-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              فتح / Åpne
+              🔓 فتح / Åpne
             </button>
 
             <button
               onClick={handlePasswordReset}
               className="w-full px-6 py-3 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all"
             >
-              نسيت كلمة السر؟ / Glemt passord?
+              ℹ️ معلومات كلمة السر / Passordinfo
             </button>
           </div>
         </div>
