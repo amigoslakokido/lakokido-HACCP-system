@@ -983,6 +983,7 @@ export default function DailyRoutine() {
           </div>
         </div>
 
+        {/* Main Task Card */}
         {currentTask && (
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 md:p-8 mb-4 border border-white/20">
           {/* Navigation */}
@@ -1244,36 +1245,6 @@ export default function DailyRoutine() {
                 )}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {showQRCode && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/95 backdrop-blur-sm"
-            onClick={() => setShowQRCode(false)}
-          ></div>
-          <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-8 border-4 border-blue-500/30 z-[10000]">
-            <button
-              onClick={() => setShowQRCode(false)}
-              className="absolute top-4 right-4 p-2 bg-red-500/20 hover:bg-red-500/40 text-white rounded-xl transition-all duration-200"
-            >
-              <XCircle className="w-6 h-6" />
-            </button>
-
-            <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {language === 'ar' ? '📱 رمز QR للوصول عبر الموبايل' : '📱 QR-kode for mobiltilgang'}
-              </h2>
-              <p className="text-blue-300">
-                {language === 'ar'
-                  ? 'امسح الكود لفتح التطبيق على هاتفك المحمول'
-                  : 'Skann koden for å åpne appen på mobiltelefonen din'}
-              </p>
-            </div>
-
-            <QRCodeDisplay />
           </div>
         </div>
       )}
