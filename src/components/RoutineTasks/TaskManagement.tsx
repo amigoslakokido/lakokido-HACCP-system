@@ -64,32 +64,46 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
     }
 
     try {
+      console.log('➕ Adding new task:', formData);
+
       const maxOrder = tasks.length > 0 ? Math.max(...tasks.map(t => t.sort_order)) : 0;
 
       const scheduleConfig = formData.schedule_type === 'every_x_days'
         ? { interval_days: formData.interval_days, last_completed: new Date().toISOString().split('T')[0] }
         : {};
 
-      const { error } = await supabase
-        .from('routine_tasks')
-        .insert({
-          name_ar: formData.name_ar,
-          name_no: formData.name_no,
-          icon: formData.icon,
-          sort_order: maxOrder + 1,
-          active: true,
-          schedule_type: formData.schedule_type,
-          schedule_config: scheduleConfig
-        });
+      const insertData = {
+        name_ar: formData.name_ar,
+        name_no: formData.name_no,
+        icon: formData.icon,
+        sort_order: maxOrder + 1,
+        active: true,
+        schedule_type: formData.schedule_type,
+        schedule_config: scheduleConfig
+      };
 
-      if (error) throw error;
+      console.log('💾 Inserting:', insertData);
+
+      const { data, error } = await supabase
+        .from('routine_tasks')
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error('❌ Insert error:', error);
+        throw error;
+      }
+
+      console.log('✅ Insert successful:', data);
 
       setFormData({ name_ar: '', name_no: '', icon: '📋', schedule_type: 'daily', interval_days: 1 });
       setShowAddForm(false);
-      loadTasks();
+      await loadTasks();
+
+      alert(language === 'ar' ? 'تمت الإضافة بنجاح! ✅' : 'Lagt til! ✅');
     } catch (error) {
-      console.error('Error adding task:', error);
-      alert(language === 'ar' ? 'حدث خطأ في إضافة المهمة' : 'Feil ved å legge til oppgave');
+      console.error('❌ Error adding task:', error);
+      alert(language === 'ar' ? 'حدث خطأ في إضافة المهمة:\n' + JSON.stringify(error) : 'Feil ved å legge til oppgave:\n' + JSON.stringify(error));
     }
   };
 
@@ -102,29 +116,44 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
     }
 
     try {
+      console.log('🔄 Updating task:', editingTask.id);
+      console.log('📝 New data:', formData);
+
       const scheduleConfig = formData.schedule_type === 'every_x_days'
         ? { interval_days: formData.interval_days, last_completed: editingTask.schedule_config?.last_completed || new Date().toISOString().split('T')[0] }
         : {};
 
-      const { error } = await supabase
-        .from('routine_tasks')
-        .update({
-          name_ar: formData.name_ar,
-          name_no: formData.name_no,
-          icon: formData.icon,
-          schedule_type: formData.schedule_type,
-          schedule_config: scheduleConfig
-        })
-        .eq('id', editingTask.id);
+      const updateData = {
+        name_ar: formData.name_ar,
+        name_no: formData.name_no,
+        icon: formData.icon,
+        schedule_type: formData.schedule_type,
+        schedule_config: scheduleConfig
+      };
 
-      if (error) throw error;
+      console.log('💾 Sending update:', updateData);
+
+      const { data, error } = await supabase
+        .from('routine_tasks')
+        .update(updateData)
+        .eq('id', editingTask.id)
+        .select();
+
+      if (error) {
+        console.error('❌ Update error:', error);
+        throw error;
+      }
+
+      console.log('✅ Update successful:', data);
 
       setEditingTask(null);
       setFormData({ name_ar: '', name_no: '', icon: '📋', schedule_type: 'daily', interval_days: 1 });
-      loadTasks();
+      await loadTasks();
+
+      alert(language === 'ar' ? 'تم حفظ التغييرات بنجاح! ✅' : 'Endringer lagret! ✅');
     } catch (error) {
-      console.error('Error updating task:', error);
-      alert(language === 'ar' ? 'حدث خطأ في تحديث المهمة' : 'Feil ved å oppdatere oppgave');
+      console.error('❌ Error updating task:', error);
+      alert(language === 'ar' ? 'حدث خطأ في تحديث المهمة:\n' + JSON.stringify(error) : 'Feil ved å oppdatere oppgave:\n' + JSON.stringify(error));
     }
   };
 
