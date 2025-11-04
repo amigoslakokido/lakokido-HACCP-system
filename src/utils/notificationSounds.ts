@@ -86,9 +86,30 @@ const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0
 
       if (preferredVoice) {
         utterance.voice = preferredVoice;
-        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
+        console.log('✅ Selected voice:', preferredVoice.name, preferredVoice.lang);
       } else {
-        console.warn('No preferred voice found, using default');
+        console.warn('⚠️ No preferred voice found, using default');
+
+        if (lang === 'ar') {
+          console.error('❌ ARABIC VOICE NOT AVAILABLE IN YOUR BROWSER!');
+          console.log('📢 The text will not be spoken correctly.');
+          console.log('');
+          console.log('💡 SOLUTIONS:');
+          console.log('   1. Use Chrome or Edge (they include Arabic voices by default)');
+          console.log('   2. Or install Arabic voice pack:');
+          console.log('      - Windows: Settings > Time & Language > Speech > Add voices');
+          console.log('      - Search for "Arabic (Saudi Arabia)" and install');
+          console.log('   3. Or switch to other notification sounds like:');
+          console.log('      • 🚨 Sirene (Siren)');
+          console.log('      • ⚡ Høyt pip (Loud Beep)');
+          console.log('');
+
+          alert('⚠️ تحذير / Warning\n\nالصوت العربي غير متوفر في متصفحك!\nArabic voice is not available in your browser!\n\n💡 الحلول / Solutions:\n\n1️⃣ استخدم Chrome أو Edge\n   Use Chrome or Edge\n\n2️⃣ ثبّت حزمة الصوت العربي من إعدادات Windows\n   Install Arabic voice pack from Windows Settings\n\n3️⃣ أو استخدم أصوات التنبيه الأخرى مثل:\n   Or use other sounds like:\n   🚨 Sirene / ⚡ Høyt pip');
+
+          console.log('⏭️ Skipping speech (no Arabic voice available)');
+          resolve();
+          return;
+        }
       }
 
       utterance.onend = () => {
