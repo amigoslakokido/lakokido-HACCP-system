@@ -68,43 +68,62 @@ const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0
     return new Promise<void>((resolve) => {
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      const setupAndSpeak = () => {
+        const utterance = new SpeechSynthesisUtterance(text);
 
-      const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
-      utterance.lang = langCode;
-      utterance.rate = rate || 0.8;
-      utterance.pitch = pitch || 0.8;
-      utterance.volume = volume;
+        const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
+        utterance.lang = langCode;
+        utterance.rate = rate || 0.8;
+        utterance.pitch = pitch || 0.8;
+        utterance.volume = volume;
 
-      const voices = window.speechSynthesis.getVoices();
-      console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+        const voices = window.speechSynthesis.getVoices();
+        console.log('🎤 Available voices:', voices.length, 'voices found');
+        console.log('🔍 Looking for:', lang === 'ar' ? 'Arabic (ar)' : 'Norwegian (nb/no)');
 
-      const preferredVoice = voices.find(v =>
-        v.lang.startsWith(lang === 'ar' ? 'ar' : 'no') ||
-        v.lang.startsWith(lang === 'ar' ? 'ar' : 'nb')
-      );
+        if (voices.length > 0) {
+          console.log('📋 All voices:', voices.map(v => `${v.name} (${v.lang})`));
+        }
 
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
-      } else {
-        console.warn('No preferred voice found, using default');
-      }
+        const preferredVoice = voices.find(v =>
+          v.lang.startsWith(lang === 'ar' ? 'ar' : 'no') ||
+          v.lang.startsWith(lang === 'ar' ? 'ar' : 'nb')
+        );
 
-      utterance.onend = () => {
-        console.log('✅ Speech completed');
-        resolve();
-      };
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+          console.log('✅ Selected voice:', preferredVoice.name, preferredVoice.lang);
+        } else {
+          console.warn('⚠️ No preferred voice found for', langCode);
+          console.log('ℹ️ Will use browser default voice');
+        }
 
-      utterance.onerror = (error) => {
-        console.error('❌ Speech error:', error);
-        resolve();
-      };
+        utterance.onend = () => {
+          console.log('✅ Speech completed');
+          resolve();
+        };
 
-      setTimeout(() => {
+        utterance.onerror = (error) => {
+          console.error('❌ Speech error:', error);
+          resolve();
+        };
+
         console.log('🗣️ Speaking:', text);
+        console.log('⚙️ Settings: rate=' + utterance.rate + ', pitch=' + utterance.pitch + ', volume=' + utterance.volume);
         window.speechSynthesis.speak(utterance);
-      }, 100);
+      };
+
+      // Wait for voices to load if not ready
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        console.log('⏳ Waiting for voices to load...');
+        window.speechSynthesis.onvoiceschanged = () => {
+          console.log('✅ Voices loaded');
+          setupAndSpeak();
+        };
+      } else {
+        setupAndSpeak();
+      }
     });
   } else {
     console.warn('❌ Speech Synthesis not supported');
