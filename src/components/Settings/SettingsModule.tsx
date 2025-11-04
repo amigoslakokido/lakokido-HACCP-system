@@ -68,6 +68,10 @@ export function SettingsModule() {
   const [showAlertSoundIcon, setShowAlertSoundIcon] = useState(true);
   const [vibrateEnabled, setVibrateEnabled] = useState(false);
 
+  const [isLocked, setIsLocked] = useState(true);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPasswordError, setShowPasswordError] = useState(false);
+
   const [addingZone, setAddingZone] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
   const [newZoneDescription, setNewZoneDescription] = useState('');
@@ -218,6 +222,33 @@ export function SettingsModule() {
 
   const removeEmailRecipient = (email: string) => {
     setEmailRecipients(emailRecipients.filter(e => e !== email));
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === 'adminstrasjon') {
+      setIsLocked(false);
+      setPasswordInput('');
+      setShowPasswordError(false);
+    } else {
+      setShowPasswordError(true);
+      setTimeout(() => setShowPasswordError(false), 3000);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    const email = 'amigoslakokido@gmail.com';
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+
+      if (error) throw error;
+
+      alert('تم إرسال رابط إعادة تعيين كلمة السر إلى البريد الإلكتروني\n\nPassordtilbakestillingslenke sendt til e-post');
+    } catch (error) {
+      console.error('Error sending password reset:', error);
+      alert('حدث خطأ في إرسال رابط إعادة التعيين\n\nFeil ved sending av tilbakestillingslenke');
+    }
   };
 
   const updateScheduleConfig = async () => {
@@ -612,6 +643,59 @@ export function SettingsModule() {
     );
   }
 
+  if (isLocked) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full border-2 border-white/20">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Settings className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-black text-gray-800 mb-2">الإعدادات</h2>
+            <p className="text-xl font-bold text-gray-600">Innstillinger</p>
+            <p className="text-sm text-gray-500 mt-2">يرجى إدخال كلمة السر للوصول</p>
+            <p className="text-sm text-gray-500">Vennligst skriv inn passordet</p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                كلمة السر / Passord
+              </label>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-lg"
+                placeholder="adminstrasjon"
+              />
+              {showPasswordError && (
+                <p className="text-red-600 text-sm mt-2 font-semibold animate-shake">
+                  ❌ كلمة السر خاطئة / Feil passord
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={handlePasswordSubmit}
+              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-xl font-black rounded-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+            >
+              فتح / Åpne
+            </button>
+
+            <button
+              onClick={handlePasswordReset}
+              className="w-full px-6 py-3 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all"
+            >
+              نسيت كلمة السر؟ / Glemt passord?
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -622,6 +706,12 @@ export function SettingsModule() {
           <h2 className="text-2xl font-bold text-slate-900">Innstillinger</h2>
           <p className="text-slate-600">Administrer soner, utstyr og ansatte</p>
         </div>
+        <button
+          onClick={() => setIsLocked(true)}
+          className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all font-bold text-sm"
+        >
+          🔒 قفل / Lås
+        </button>
       </div>
 
       {/* Notification Settings Section */}
