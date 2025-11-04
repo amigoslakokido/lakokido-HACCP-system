@@ -63,20 +63,53 @@ const playSiren = async (duration: number, volume: number) => {
   });
 };
 
-const speakText = async (text: string, lang: string = 'ar') => {
+const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0, rate: number = 0.9, pitch: number = 1.0) => {
   if ('speechSynthesis' in window) {
     return new Promise<void>((resolve) => {
+      window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang === 'ar' ? 'ar-SA' : 'no-NO';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      window.speechSynthesis.speak(utterance);
+
+      const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
+      utterance.lang = langCode;
+      utterance.rate = rate || 0.9;
+      utterance.pitch = pitch || 1.0;
+      utterance.volume = volume;
+
+      const voices = window.speechSynthesis.getVoices();
+      console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+
+      const preferredVoice = voices.find(v =>
+        v.lang.startsWith(lang === 'ar' ? 'ar' : 'no') ||
+        v.lang.startsWith(lang === 'ar' ? 'ar' : 'nb')
+      );
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
+      } else {
+        console.warn('No preferred voice found, using default');
+      }
+
+      utterance.onend = () => {
+        console.log('✅ Speech completed');
+        resolve();
+      };
+
+      utterance.onerror = (error) => {
+        console.error('❌ Speech error:', error);
+        resolve();
+      };
+
+      setTimeout(() => {
+        console.log('🗣️ Speaking:', text);
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     });
+  } else {
+    console.warn('❌ Speech Synthesis not supported');
+    return Promise.resolve();
   }
-  return Promise.resolve();
 };
 
 export const NOTIFICATION_SOUNDS = {
@@ -142,7 +175,8 @@ export const NOTIFICATION_SOUNDS = {
     duration: 3,
     description: 'صوت بشري يقرأ التنبيه بالعربية',
     type: 'voice' as const,
-    text: 'تنبيه! يرجى إكمال المهام الروتينية اليومية'
+    text: 'تنبيه! يرجى إكمال المهام الروتينية اليومية',
+    customizable: true
   },
   voice_no: {
     name: '🗣️ Menneskelig stemme norsk',
@@ -150,7 +184,8 @@ export const NOTIFICATION_SOUNDS = {
     duration: 3,
     description: 'Menneskelig stemme leser varselet på norsk',
     type: 'voice' as const,
-    text: 'Advarsel! Vennligst fullfør de daglige rutineoppgavene'
+    text: 'Advarsel! Vennligst fullfør de daglige rutineoppgavene',
+    customizable: true
   }
 };
 
@@ -159,9 +194,12 @@ export const playSound = async (
   volume: number,
   repeatCount: number,
   intervalSeconds: number,
-  onComplete?: () => void
+  onComplete?: () => void,
+  customText?: string,
+  voiceRate?: number,
+  voicePitch?: number
 ) => {
-  console.log('🔊 playSound called with:', { soundType, volume, repeatCount, intervalSeconds });
+  console.log('🔊 playSound called with:', { soundType, volume, repeatCount, intervalSeconds, customText, voiceRate, voicePitch });
 
   const sound = NOTIFICATION_SOUNDS[soundType];
   if (!sound) {
@@ -180,8 +218,15 @@ export const playSound = async (
         console.log('🚨 Playing siren for', sound.duration + 's');
         await playSiren(sound.duration, calculatedVolume);
       } else if (sound.type === 'voice') {
-        console.log('🗣️ Speaking text:', sound.text);
-        await speakText(sound.text || '', soundType.includes('ar') ? 'ar' : 'no');
+        const textToSpeak = customText || sound.text || '';
+        console.log('🗣️ Speaking text:', textToSpeak);
+        await speakText(
+          textToSpeak,
+          soundType.includes('ar') ? 'ar' : 'no',
+          calculatedVolume,
+          voiceRate,
+          voicePitch
+        );
       } else {
         console.log('🎵 Playing tone:', sound.frequency + 'Hz for', sound.duration + 's');
         await playTone(sound.frequency, sound.duration, calculatedVolume);

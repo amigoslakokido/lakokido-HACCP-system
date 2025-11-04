@@ -32,6 +32,10 @@ interface NotificationSettings {
   alert_auto_dismiss: boolean;
   show_alert_sound_icon: boolean;
   vibrate_enabled: boolean;
+  voice_message_ar: string;
+  voice_message_no: string;
+  voice_rate: number;
+  voice_pitch: number;
 }
 
 export function SettingsModule() {
@@ -67,6 +71,10 @@ export function SettingsModule() {
   const [alertAutoDismiss, setAlertAutoDismiss] = useState(false);
   const [showAlertSoundIcon, setShowAlertSoundIcon] = useState(true);
   const [vibrateEnabled, setVibrateEnabled] = useState(false);
+  const [voiceMessageAr, setVoiceMessageAr] = useState('تنبيه! يرجى إكمال المهام الروتينية اليومية');
+  const [voiceMessageNo, setVoiceMessageNo] = useState('Advarsel! Vennligst fullfør de daglige rutineoppgavene');
+  const [voiceRate, setVoiceRate] = useState(0.9);
+  const [voicePitch, setVoicePitch] = useState(1.0);
 
   const [isLocked, setIsLocked] = useState(true);
   const [passwordInput, setPasswordInput] = useState('');
@@ -157,6 +165,10 @@ export function SettingsModule() {
         setAlertAutoDismiss(data.alert_auto_dismiss || false);
         setShowAlertSoundIcon(data.show_alert_sound_icon ?? true);
         setVibrateEnabled(data.vibrate_enabled || false);
+        setVoiceMessageAr(data.voice_message_ar || 'تنبيه! يرجى إكمال المهام الروتينية اليومية');
+        setVoiceMessageNo(data.voice_message_no || 'Advarsel! Vennligst fullfør de daglige rutineoppgavene');
+        setVoiceRate(data.voice_rate || 0.9);
+        setVoicePitch(data.voice_pitch || 1.0);
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);
@@ -189,6 +201,10 @@ export function SettingsModule() {
           alert_auto_dismiss: alertAutoDismiss,
           show_alert_sound_icon: showAlertSoundIcon,
           vibrate_enabled: vibrateEnabled,
+          voice_message_ar: voiceMessageAr,
+          voice_message_no: voiceMessageNo,
+          voice_rate: voiceRate,
+          voice_pitch: voicePitch,
         })
         .eq('id', notificationSettings.id)
         .select()
@@ -800,7 +816,8 @@ export function SettingsModule() {
                     <button
                       onClick={() => {
                         console.log('Testing sound:', soundType, 'at volume:', soundVolume);
-                        playSound(soundType, soundVolume, 1, 0);
+                        const customText = soundType === 'voice_ar' ? voiceMessageAr : soundType === 'voice_no' ? voiceMessageNo : undefined;
+                        playSound(soundType, soundVolume, 1, 0, undefined, customText, voiceRate, voicePitch);
                       }}
                       className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all font-semibold"
                     >
@@ -865,6 +882,101 @@ export function SettingsModule() {
                         onChange={(e) => setSoundInterval(parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
                       />
+                    </div>
+                  )}
+
+                  {/* Voice Message Settings */}
+                  {(soundType === 'voice_ar' || soundType === 'voice_no') && (
+                    <div className="pt-4 border-t-2 border-gray-200 space-y-4">
+                      <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                        🗣️ إعدادات الرسائل البشرية / Taleinnstillinger
+                      </h4>
+
+                      {/* Arabic Message */}
+                      {soundType === 'voice_ar' && (
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            📝 الرسالة العربية / Arabisk melding
+                          </label>
+                          <textarea
+                            value={voiceMessageAr}
+                            onChange={(e) => setVoiceMessageAr(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                            placeholder="تنبيه! يرجى إكمال المهام الروتينية اليومية"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 سيتم قراءة هذا النص بصوت بشري عربي
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Norwegian Message */}
+                      {soundType === 'voice_no' && (
+                        <div>
+                          <label className="block text-sm font-bold text-gray-700 mb-2">
+                            📝 النص النرويجي / Norsk melding
+                          </label>
+                          <textarea
+                            value={voiceMessageNo}
+                            onChange={(e) => setVoiceMessageNo(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                            placeholder="Advarsel! Vennligst fullfør de daglige rutineoppgavene"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            💡 Denne teksten vil bli lest opp med menneskelig stemme
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Voice Rate */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-bold text-gray-700">
+                            ⚡ سرعة القراءة / Lesehastighet
+                          </label>
+                          <span className="text-sm font-black text-blue-600">{voiceRate.toFixed(1)}x</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="1.5"
+                          step="0.1"
+                          value={voiceRate}
+                          onChange={(e) => setVoiceRate(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>بطيء / Sakte (0.5x)</span>
+                          <span>عادي / Normal (1.0x)</span>
+                          <span>سريع / Rask (1.5x)</span>
+                        </div>
+                      </div>
+
+                      {/* Voice Pitch */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-bold text-gray-700">
+                            🎵 نبرة الصوت / Tonehøyde
+                          </label>
+                          <span className="text-sm font-black text-purple-600">{voicePitch.toFixed(1)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="1.5"
+                          step="0.1"
+                          value={voicePitch}
+                          onChange={(e) => setVoicePitch(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>منخفض / Lav (0.5)</span>
+                          <span>عادي / Normal (1.0)</span>
+                          <span>عالي / Høy (1.5)</span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -46,6 +46,10 @@ export default function DailyRoutine() {
   const [alertAutoDismiss, setAlertAutoDismiss] = useState(false);
   const [showAlertSoundIcon, setShowAlertSoundIcon] = useState(true);
   const [vibrateEnabled, setVibrateEnabled] = useState(false);
+  const [voiceMessageAr, setVoiceMessageAr] = useState('تنبيه! يرجى إكمال المهام الروتينية اليومية');
+  const [voiceMessageNo, setVoiceMessageNo] = useState('Advarsel! Vennligst fullfør de daglige rutineoppgavene');
+  const [voiceRate, setVoiceRate] = useState(0.9);
+  const [voicePitch, setVoicePitch] = useState(1.0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reportNotes, setReportNotes] = useState('');
   const [flashScreen, setFlashScreen] = useState(false);
@@ -94,6 +98,10 @@ export default function DailyRoutine() {
         setAlertAutoDismiss(data.alert_auto_dismiss || false);
         setShowAlertSoundIcon(data.show_alert_sound_icon ?? true);
         setVibrateEnabled(data.vibrate_enabled || false);
+        setVoiceMessageAr(data.voice_message_ar || 'تنبيه! يرجى إكمال المهام الروتينية اليومية');
+        setVoiceMessageNo(data.voice_message_no || 'Advarsel! Vennligst fullfør de daglige rutineoppgavene');
+        setVoiceRate(data.voice_rate || 0.9);
+        setVoicePitch(data.voice_pitch || 1.0);
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);
@@ -102,7 +110,8 @@ export default function DailyRoutine() {
 
   const playNotificationSound = () => {
     if (soundEnabled) {
-      playSound(soundType, soundVolume, soundRepeat, soundInterval);
+      const customText = soundType === 'voice_ar' ? voiceMessageAr : soundType === 'voice_no' ? voiceMessageNo : undefined;
+      playSound(soundType, soundVolume, soundRepeat, soundInterval, undefined, customText, voiceRate, voicePitch);
 
       if (vibrateEnabled && 'vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
