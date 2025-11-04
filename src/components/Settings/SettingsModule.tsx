@@ -73,8 +73,8 @@ export function SettingsModule() {
   const [vibrateEnabled, setVibrateEnabled] = useState(false);
   const [voiceMessageAr, setVoiceMessageAr] = useState('تنبيه! يرجى إكمال المهام الروتينية اليومية');
   const [voiceMessageNo, setVoiceMessageNo] = useState('Advarsel! Vennligst fullfør de daglige rutineoppgavene');
-  const [voiceRate, setVoiceRate] = useState(0.9);
-  const [voicePitch, setVoicePitch] = useState(1.0);
+  const [voiceRate, setVoiceRate] = useState(0.8);
+  const [voicePitch, setVoicePitch] = useState(0.8);
 
   const [isLocked, setIsLocked] = useState(true);
   const [passwordInput, setPasswordInput] = useState('');
@@ -167,8 +167,8 @@ export function SettingsModule() {
         setVibrateEnabled(data.vibrate_enabled || false);
         setVoiceMessageAr(data.voice_message_ar || 'تنبيه! يرجى إكمال المهام الروتينية اليومية');
         setVoiceMessageNo(data.voice_message_no || 'Advarsel! Vennligst fullfør de daglige rutineoppgavene');
-        setVoiceRate(data.voice_rate || 0.9);
-        setVoicePitch(data.voice_pitch || 1.0);
+        setVoiceRate(data.voice_rate || 0.8);
+        setVoicePitch(data.voice_pitch || 0.8);
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);

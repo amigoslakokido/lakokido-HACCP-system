@@ -63,7 +63,7 @@ const playSiren = async (duration: number, volume: number) => {
   });
 };
 
-const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0, rate: number = 0.9, pitch: number = 1.0) => {
+const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0, rate: number = 0.8, pitch: number = 0.8) => {
   if ('speechSynthesis' in window) {
     return new Promise<void>((resolve) => {
       window.speechSynthesis.cancel();
@@ -72,8 +72,8 @@ const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0
 
       const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
       utterance.lang = langCode;
-      utterance.rate = rate || 0.9;
-      utterance.pitch = pitch || 1.0;
+      utterance.rate = rate || 0.8;
+      utterance.pitch = pitch || 0.8;
       utterance.volume = volume;
 
       const voices = window.speechSynthesis.getVoices();
