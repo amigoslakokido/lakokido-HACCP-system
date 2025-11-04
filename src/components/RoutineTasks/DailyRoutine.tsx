@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase';
 import { CheckCircle2, XCircle, ChevronLeft, ChevronRight, Settings, Sparkles, User, MessageSquare, Bell, BellRing, AlertTriangle, FileText, Save } from 'lucide-react';
 import TaskManagement from './TaskManagement';
 import { playSound } from '../../utils/notificationSounds';
-import { QRCodeDisplay } from '../Dashboard/QRCodeDisplay';
+import { QRButton } from '../Dashboard/QRButton';
 
 interface RoutineTask {
   id: string;
@@ -934,6 +934,7 @@ export default function DailyRoutine() {
               >
                 <Settings className="w-5 h-5" />
               </button>
+              <QRButton language={language} />
               <button
                 onClick={() => setLanguage(language === 'ar' ? 'no' : 'ar')}
                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/20"
@@ -982,12 +983,8 @@ export default function DailyRoutine() {
           </div>
         </div>
 
-        {/* QR Code for Mobile Access */}
-        <div className="mb-4">
-          <QRCodeDisplay />
-        </div>
-
         {/* Main Task Card */}
+        {currentTask && (
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 md:p-8 mb-4 border border-white/20">
           {/* Navigation */}
           <div className="flex items-center justify-between mb-6">
@@ -1097,6 +1094,7 @@ export default function DailyRoutine() {
             </div>
           )}
         </div>
+        )}
 
         {/* All Tasks Overview */}
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 border border-white/20">
