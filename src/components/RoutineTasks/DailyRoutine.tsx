@@ -63,10 +63,15 @@ export default function DailyRoutine() {
   useEffect(() => {
     loadData();
     loadNotificationSettings();
-    checkOverdueTasks();
-    const interval = setInterval(checkOverdueTasks, 60000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (tasks.length > 0) {
+      checkOverdueTasks();
+      const interval = setInterval(checkOverdueTasks, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [tasks, completedToday, warningHour, dangerHour, criticalHour]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -159,13 +164,29 @@ export default function DailyRoutine() {
     const currentHour = now.getHours();
     const incompleteCount = tasks.length - completedToday.size;
 
-    if (incompleteCount === 0) return;
+    console.log('🔔 Checking overdue tasks:', {
+      currentHour,
+      warningHour,
+      dangerHour,
+      criticalHour,
+      totalTasks: tasks.length,
+      completedTasks: completedToday.size,
+      incompleteCount,
+      soundEnabled,
+      inAppAlerts
+    });
+
+    if (incompleteCount === 0) {
+      console.log('✅ All tasks completed, no alerts needed');
+      return;
+    }
 
     if (currentHour >= warningHour && currentHour < dangerHour && incompleteCount > 0) {
       const message = language === 'ar'
         ? `⚠️ لديك ${incompleteCount} مهمة غير مكتملة`
         : `⚠️ Du har ${incompleteCount} ufullførte oppgaver`;
       if (!alerts.some(a => a.message.includes(incompleteCount.toString()))) {
+        console.log('⚠️ Adding WARNING alert:', message);
         addAlert(message, 'warning');
       }
     } else if (currentHour >= dangerHour && currentHour < criticalHour && incompleteCount > 0) {
@@ -173,6 +194,7 @@ export default function DailyRoutine() {
         ? `🔴 عاجل: ${incompleteCount} مهمة يجب إنجازها قبل نهاية الوردية!`
         : `🔴 Haster: ${incompleteCount} oppgaver må fullføres før skiftet slutter!`;
       if (!alerts.some(a => a.type === 'danger')) {
+        console.log('🔴 Adding DANGER alert:', message);
         addAlert(message, 'danger');
       }
     } else if (currentHour >= criticalHour && incompleteCount > 0) {
@@ -180,8 +202,11 @@ export default function DailyRoutine() {
         ? `❌ متأخر جداً: ${incompleteCount} مهمة لم تكتمل!`
         : `❌ Svært forsinket: ${incompleteCount} oppgaver ikke fullført!`;
       if (!alerts.some(a => a.message.includes('متأخر') || a.message.includes('forsinket'))) {
+        console.log('❌ Adding CRITICAL alert:', message);
         addAlert(message, 'danger');
       }
+    } else {
+      console.log('ℹ️ Current hour not in alert range');
     }
   };
 
@@ -260,7 +285,6 @@ export default function DailyRoutine() {
       }
 
       setLoading(false);
-      checkOverdueTasks();
     } catch (error) {
       console.error('Error loading data:', error);
       setLoading(false);
