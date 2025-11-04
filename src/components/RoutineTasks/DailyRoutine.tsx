@@ -48,6 +48,8 @@ export default function DailyRoutine() {
   const [vibrateEnabled, setVibrateEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reportNotes, setReportNotes] = useState('');
+  const [flashScreen, setFlashScreen] = useState(false);
+  const [shakeScreen, setShakeScreen] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [canAccessTasks, setCanAccessTasks] = useState(true);
@@ -118,6 +120,15 @@ export default function DailyRoutine() {
       timestamp: new Date()
     };
     setAlerts(prev => [newAlert, ...prev].slice(0, 5));
+
+    // Visual effects for urgent alerts
+    if (type === 'danger') {
+      setFlashScreen(true);
+      setTimeout(() => setFlashScreen(false), 500);
+
+      setShakeScreen(true);
+      setTimeout(() => setShakeScreen(false), 600);
+    }
 
     if (type === 'danger' || type === 'warning') {
       playNotificationSound();
@@ -765,7 +776,12 @@ export default function DailyRoutine() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8 relative overflow-hidden">
+    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4 md:p-8 relative overflow-hidden ${flashScreen ? 'flash-screen' : ''} ${shakeScreen ? 'shake-screen' : ''}`}>
+      {/* Flash Overlay */}
+      {flashScreen && (
+        <div className="fixed inset-0 z-50 pointer-events-none bg-gradient-to-br from-red-500/40 via-orange-500/40 to-red-500/40 animate-pulse"></div>
+      )}
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent"></div>
@@ -793,12 +809,12 @@ export default function DailyRoutine() {
           {alerts.map(alert => (
             <div
               key={alert.id}
-              className={`backdrop-blur-xl rounded-2xl shadow-2xl flex items-start gap-3 border-2 ${
+              className={`backdrop-blur-xl rounded-2xl shadow-2xl flex items-start gap-3 border-4 ${
                 alert.type === 'danger'
-                  ? 'bg-red-500/95 border-red-400 text-white'
+                  ? 'bg-red-600/95 border-red-400 text-white animate-pulse-danger animate-glow-danger'
                   : alert.type === 'warning'
-                  ? 'bg-amber-500/95 border-amber-400 text-white'
-                  : 'bg-blue-500/95 border-blue-400 text-white'
+                  ? 'bg-amber-600/95 border-amber-400 text-white animate-pulse'
+                  : 'bg-blue-600/95 border-blue-400 text-white'
               } ${
                 alertSize === 'small' ? 'p-3' :
                 alertSize === 'large' ? 'p-6' :

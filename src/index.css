@@ -81,3 +81,91 @@
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+@keyframes flash-red {
+  0%, 100% {
+    background-color: transparent;
+  }
+  25% {
+    background-color: rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    background-color: rgba(239, 68, 68, 0.5);
+  }
+  75% {
+    background-color: rgba(239, 68, 68, 0.3);
+  }
+}
+
+@keyframes shake-intense {
+  0%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  10% {
+    transform: translateX(-10px) rotate(-1deg);
+  }
+  20% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  30% {
+    transform: translateX(-10px) rotate(-1deg);
+  }
+  40% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  50% {
+    transform: translateX(-10px) rotate(-1deg);
+  }
+  60% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  70% {
+    transform: translateX(-10px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  90% {
+    transform: translateX(-5px) rotate(-0.5deg);
+  }
+}
+
+@keyframes pulse-danger {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    border-color: rgba(239, 68, 68, 1);
+  }
+  50% {
+    box-shadow: 0 0 0 30px rgba(239, 68, 68, 0);
+    border-color: rgba(239, 68, 68, 0.5);
+  }
+}
+
+@keyframes glow-danger {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5),
+                0 0 40px rgba(239, 68, 68, 0.3),
+                0 0 60px rgba(239, 68, 68, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.8),
+                0 0 80px rgba(239, 68, 68, 0.6),
+                0 0 120px rgba(239, 68, 68, 0.4);
+  }
+}
+
+.flash-screen {
+  animation: flash-red 0.5s ease-in-out;
+}
+
+.shake-screen {
+  animation: shake-intense 0.6s ease-in-out;
+}
+
+.animate-pulse-danger {
+  animation: pulse-danger 1.5s ease-in-out infinite;
+}
+
+.animate-glow-danger {
+  animation: glow-danger 1s ease-in-out infinite;
+}
