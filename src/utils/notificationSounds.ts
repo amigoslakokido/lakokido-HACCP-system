@@ -68,69 +68,43 @@ const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0
     return new Promise<void>((resolve) => {
       window.speechSynthesis.cancel();
 
-      const setupAndSpeak = () => {
-        const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(text);
 
-        const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
-        utterance.lang = langCode;
-        utterance.rate = rate || 0.8;
-        utterance.pitch = pitch || 0.8;
-        utterance.volume = volume;
+      const langCode = lang === 'ar' ? 'ar-SA' : 'nb-NO';
+      utterance.lang = langCode;
+      utterance.rate = rate || 0.8;
+      utterance.pitch = pitch || 0.8;
+      utterance.volume = volume;
 
-        const voices = window.speechSynthesis.getVoices();
-        console.log('🎤 Available voices:', voices.length, 'voices found');
-        console.log('🔍 Looking for:', lang === 'ar' ? 'Arabic (ar)' : 'Norwegian (nb/no)');
+      const voices = window.speechSynthesis.getVoices();
+      console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
 
-        if (voices.length > 0) {
-          console.log('📋 All voices:', voices.map(v => `${v.name} (${v.lang})`));
-        }
+      const preferredVoice = voices.find(v =>
+        v.lang.startsWith(lang === 'ar' ? 'ar' : 'no') ||
+        v.lang.startsWith(lang === 'ar' ? 'ar' : 'nb')
+      );
 
-        const preferredVoice = voices.find(v =>
-          v.lang.startsWith(lang === 'ar' ? 'ar' : 'no') ||
-          v.lang.startsWith(lang === 'ar' ? 'ar' : 'nb')
-        );
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
+      } else {
+        console.warn('No preferred voice found, using default');
+      }
 
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
-          console.log('✅ Selected voice:', preferredVoice.name, preferredVoice.lang);
-        } else {
-          console.warn('⚠️ No preferred voice found for', langCode);
-          console.log('ℹ️ Will use browser default voice (may not pronounce correctly)');
-
-          if (lang === 'ar') {
-            console.log('💡 Tip: To hear Arabic voice properly:');
-            console.log('   • Chrome/Edge: Built-in Arabic voices available');
-            console.log('   • Windows: Settings > Time & Language > Speech > Add voices > Arabic');
-            console.log('   • Or use other notification sounds: Siren, Alarm, etc.');
-          }
-        }
-
-        utterance.onend = () => {
-          console.log('✅ Speech completed');
-          resolve();
-        };
-
-        utterance.onerror = (error) => {
-          console.error('❌ Speech error:', error);
-          resolve();
-        };
-
-        console.log('🗣️ Speaking:', text);
-        console.log('⚙️ Settings: rate=' + utterance.rate + ', pitch=' + utterance.pitch + ', volume=' + utterance.volume);
-        window.speechSynthesis.speak(utterance);
+      utterance.onend = () => {
+        console.log('✅ Speech completed');
+        resolve();
       };
 
-      // Wait for voices to load if not ready
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) {
-        console.log('⏳ Waiting for voices to load...');
-        window.speechSynthesis.onvoiceschanged = () => {
-          console.log('✅ Voices loaded');
-          setupAndSpeak();
-        };
-      } else {
-        setupAndSpeak();
-      }
+      utterance.onerror = (error) => {
+        console.error('❌ Speech error:', error);
+        resolve();
+      };
+
+      setTimeout(() => {
+        console.log('🗣️ Speaking:', text);
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     });
   } else {
     console.warn('❌ Speech Synthesis not supported');
