@@ -848,42 +848,42 @@ export default function DailyRoutine() {
 
       <div className="max-w-7xl mx-auto relative">
         {/* Header */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 md:p-8 mb-6 border border-white/20 transform hover:shadow-3xl transition-all duration-300">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-            <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-blue-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-4 md:p-5 mb-4 border border-white/20">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 mb-4">
+            <h1 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
               {language === 'ar' ? '🎯 المهام الروتينية اليومية' : '🎯 Daglige Rutineoppgaver'}
             </h1>
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={handleResetToday}
-                className="p-4 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-2xl hover:shadow-xl transform hover:scale-110 transition-all duration-300 border-2 border-white/20"
+                className="p-2 bg-gradient-to-r from-red-500 to-red-700 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/20"
                 title={language === 'ar' ? 'إعادة تعيين اليوم' : 'Reset dag'}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
               <button
                 onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`p-4 text-white rounded-2xl hover:shadow-xl transform hover:scale-110 transition-all duration-300 border-2 border-white/20 ${
+                className={`p-2 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/20 ${
                   soundEnabled
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600'
                     : 'bg-gradient-to-r from-gray-500 to-gray-600'
                 }`}
                 title={language === 'ar' ? (soundEnabled ? 'إيقاف الصوت' : 'تفعيل الصوت') : (soundEnabled ? 'Demp lyd' : 'Aktiver lyd')}
               >
-                {soundEnabled ? <Bell className="w-6 h-6" /> : <BellRing className="w-6 h-6 opacity-50" />}
+                {soundEnabled ? <Bell className="w-5 h-5" /> : <BellRing className="w-5 h-5 opacity-50" />}
               </button>
               <button
                 onClick={() => setShowManagement(true)}
-                className="p-4 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-2xl hover:shadow-xl transform hover:scale-110 transition-all duration-300 border-2 border-white/20"
+                className="p-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/20"
                 title={language === 'ar' ? 'إدارة المهام' : 'Administrer oppgaver'}
               >
-                <Settings className="w-6 h-6" />
+                <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setLanguage(language === 'ar' ? 'no' : 'ar')}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xl font-bold rounded-2xl hover:shadow-xl transform hover:scale-110 transition-all duration-300 border-2 border-white/20"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-bold rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/20"
               >
                 {language === 'ar' ? 'NO' : 'ع'}
               </button>
@@ -892,13 +892,13 @@ export default function DailyRoutine() {
 
           {/* Progress Bar */}
           <div className="relative">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-xl font-bold text-gray-700 flex items-center gap-2">
-                {getTaskUrgencyColor() === 'critical' && <AlertTriangle className="w-6 h-6 text-red-600 animate-pulse" />}
-                {getTaskUrgencyColor() === 'danger' && <BellRing className="w-6 h-6 text-orange-600 animate-bounce" />}
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-lg font-bold text-gray-700 flex items-center gap-2">
+                {getTaskUrgencyColor() === 'critical' && <AlertTriangle className="w-5 h-5 text-red-600 animate-pulse" />}
+                {getTaskUrgencyColor() === 'danger' && <BellRing className="w-5 h-5 text-orange-600 animate-bounce" />}
                 {language === 'ar' ? '📊 التقدم اليومي' : '📊 Daglig fremgang'}
               </span>
-              <span className={`text-4xl font-black bg-gradient-to-r bg-clip-text text-transparent ${
+              <span className={`text-3xl font-black bg-gradient-to-r bg-clip-text text-transparent ${
                 getTaskUrgencyColor() === 'success' ? 'from-emerald-600 to-teal-600' :
                 getTaskUrgencyColor() === 'critical' ? 'from-red-600 to-pink-600' :
                 getTaskUrgencyColor() === 'danger' ? 'from-orange-600 to-red-600' :
@@ -908,20 +908,20 @@ export default function DailyRoutine() {
                 {completedCount} / {totalCount}
               </span>
             </div>
-            <div className={`relative w-full h-8 rounded-2xl shadow-inner overflow-hidden border-2 ${
+            <div className={`relative w-full h-6 rounded-xl shadow-inner overflow-hidden border-2 ${
               getTaskUrgencyColor() === 'critical' ? 'bg-gradient-to-r from-red-200 to-red-300 border-red-400 animate-pulse' :
               getTaskUrgencyColor() === 'danger' ? 'bg-gradient-to-r from-orange-200 to-orange-300 border-orange-400' :
               getTaskUrgencyColor() === 'warning' ? 'bg-gradient-to-r from-amber-200 to-amber-300 border-amber-400' :
               'bg-gradient-to-r from-gray-200 to-gray-300 border-gray-300/50'
             }`}>
               <div
-                className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 rounded-2xl transition-all duration-1000 ease-out relative overflow-hidden"
+                className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500 rounded-xl transition-all duration-1000 ease-out relative overflow-hidden"
                 style={{ width: `${completionPercentage}%` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
                 {completionPercentage > 15 && (
-                  <div className="absolute inset-0 flex items-center justify-end pr-4">
-                    <span className="text-white text-lg font-bold drop-shadow-lg">{Math.round(completionPercentage)}%</span>
+                  <div className="absolute inset-0 flex items-center justify-end pr-3">
+                    <span className="text-white text-sm font-bold drop-shadow-lg">{Math.round(completionPercentage)}%</span>
                   </div>
                 )}
               </div>
@@ -930,18 +930,18 @@ export default function DailyRoutine() {
         </div>
 
         {/* Main Task Card */}
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-12 mb-6 border border-white/20 transform hover:shadow-3xl transition-all duration-300">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 md:p-8 mb-4 border border-white/20">
           {/* Navigation */}
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center justify-between mb-6">
             <button
               onClick={goToPrevious}
-              className="group p-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl hover:shadow-2xl transform hover:scale-110 transition-all duration-300 border-2 border-white/30"
+              className="group p-3 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/30"
             >
-              <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
             </button>
 
-            <div className="text-center px-6 py-3 bg-gradient-to-r from-blue-50 to-emerald-50 rounded-2xl border-2 border-blue-200/50">
-              <p className="text-xl font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+            <div className="text-center px-4 py-2 bg-gradient-to-r from-blue-50 to-emerald-50 rounded-xl border border-blue-200/50">
+              <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
                 {language === 'ar'
                   ? `المهمة ${currentTaskIndex + 1} من ${totalCount}`
                   : `Oppgave ${currentTaskIndex + 1} av ${totalCount}`}
@@ -950,21 +950,21 @@ export default function DailyRoutine() {
 
             <button
               onClick={goToNext}
-              className="group p-5 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl hover:shadow-2xl transform hover:scale-110 transition-all duration-300 border-2 border-white/30"
+              className="group p-3 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 border border-white/30"
             >
-              <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
+              <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
             </button>
           </div>
 
           {/* Task Display */}
-          <div className="text-center mb-10">
-            <div className="relative inline-block mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full blur-3xl opacity-20 animate-pulse"></div>
-              <div className="relative text-9xl transform hover:scale-110 transition-transform duration-300 drop-shadow-2xl">
+          <div className="text-center mb-6">
+            <div className="relative inline-block mb-4">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-emerald-400 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+              <div className="relative text-7xl transform hover:scale-105 transition-transform duration-300 drop-shadow-xl">
                 {currentTask.icon}
               </div>
             </div>
-            <h2 className="text-5xl md:text-7xl font-black text-gray-800 mb-6 leading-tight">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-800 mb-4 leading-tight">
               {language === 'ar' ? currentTask.name_ar : currentTask.name_no}
             </h2>
 
