@@ -20,53 +20,52 @@ export function QRButton({ language }: QRButtonProps) {
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-zoom" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative animate-zoom" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              className="absolute top-3 right-3 p-2 hover:bg-slate-100 rounded-lg transition-colors z-10"
             >
               <X className="w-5 h-5 text-slate-600" />
             </button>
 
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <QrCode className="w-8 h-8 text-blue-600" />
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {language === 'ar' ? 'رمز QR للموبايل' : 'QR-kode for mobil'}
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <QrCode className="w-6 h-6 text-blue-600" />
+                <h2 className="text-xl font-bold text-slate-900">
+                  {language === 'ar' ? 'رمز QR' : 'QR-kode'}
                 </h2>
               </div>
 
-              <p className="text-slate-600 text-sm">
+              <p className="text-slate-600 text-xs px-2">
                 {language === 'ar'
-                  ? 'امسح الرمز بكاميرا موبايلك لفتح التطبيق والتقاط الصور للحوادث الحرجة'
-                  : 'Skann koden med mobilkameraet for å åpne appen og ta bilder til kritiske hendelser'}
+                  ? 'امسح الرمز لفتح التطبيق على الموبايل'
+                  : 'Skann koden for å åpne på mobil'}
               </p>
 
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-100">
-                <div className="bg-white p-4 rounded-xl shadow-lg inline-block">
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 border-2 border-blue-100">
+                <div className="bg-white p-2 rounded-lg shadow-lg mx-auto" style={{width: 'fit-content'}}>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin)}`}
                     alt="QR Code"
-                    className="w-64 h-64"
+                    className="w-48 h-48 mx-auto"
                   />
                 </div>
               </div>
 
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
-                <p className="text-sm font-medium text-amber-800 mb-2">
-                  {language === 'ar' ? '💡 نصائح:' : '💡 Tips:'}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                <p className="text-xs font-medium text-amber-800 mb-1">
+                  {language === 'ar' ? '💡 كيف تستخدم:' : '💡 Slik gjør du:'}
                 </p>
-                <ul className="text-xs text-amber-700 space-y-1">
-                  <li>• {language === 'ar' ? 'افتح كاميرا الموبايل' : 'Åpne mobilkameraet'}</li>
-                  <li>• {language === 'ar' ? 'وجه الكاميرا نحو الرمز' : 'Rett kameraet mot koden'}</li>
-                  <li>• {language === 'ar' ? 'اضغط على الإشعار' : 'Trykk på varselet'}</li>
-                  <li>• {language === 'ar' ? 'الآن يمكنك التقاط الصور!' : 'Nå kan du ta bilder!'}</li>
+                <ul className="text-xs text-amber-700 space-y-0.5">
+                  <li>• {language === 'ar' ? 'افتح كاميرا الموبايل' : 'Åpne kameraet'}</li>
+                  <li>• {language === 'ar' ? 'امسح الرمز' : 'Skann koden'}</li>
+                  <li>• {language === 'ar' ? 'اضغط على الإشعار' : 'Trykk på varsel'}</li>
                 </ul>
               </div>
 
-              <div className="pt-4">
-                <p className="text-xs text-slate-500">{language === 'ar' ? 'الرابط:' : 'Link:'}</p>
-                <p className="text-sm font-mono text-slate-700 break-all bg-slate-100 rounded-lg p-2 mt-1">
+              <div className="pt-2">
+                <p className="text-xs text-slate-500 mb-1">{language === 'ar' ? 'الرابط:' : 'Link:'}</p>
+                <p className="text-xs font-mono text-slate-700 break-all bg-slate-100 rounded-lg p-2">
                   {window.location.origin}
                 </p>
               </div>
