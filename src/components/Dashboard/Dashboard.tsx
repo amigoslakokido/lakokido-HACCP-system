@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Thermometer, Sparkles, FileText, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react';
+import { QRCodeDisplay } from './QRCodeDisplay';
 
 export function Dashboard() {
   const [stats, setStats] = useState({
@@ -166,6 +167,8 @@ export function Dashboard() {
           </div>
         ))}
       </div>
+
+      <QRCodeDisplay />
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
