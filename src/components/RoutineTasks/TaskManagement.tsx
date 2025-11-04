@@ -9,6 +9,13 @@ interface RoutineTask {
   icon: string;
   sort_order: number;
   active: boolean;
+  schedule_type?: 'daily' | 'every_x_days' | 'weekly' | 'monthly';
+  schedule_config?: {
+    interval_days?: number;
+    last_completed?: string;
+    days?: number[];
+    day?: number;
+  };
 }
 
 interface TaskManagementProps {
@@ -25,7 +32,9 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
   const [formData, setFormData] = useState({
     name_ar: '',
     name_no: '',
-    icon: '📋'
+    icon: '📋',
+    schedule_type: 'daily' as 'daily' | 'every_x_days' | 'weekly' | 'monthly',
+    interval_days: 1
   });
 
   useEffect(() => {
@@ -57,6 +66,10 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
     try {
       const maxOrder = tasks.length > 0 ? Math.max(...tasks.map(t => t.sort_order)) : 0;
 
+      const scheduleConfig = formData.schedule_type === 'every_x_days'
+        ? { interval_days: formData.interval_days, last_completed: new Date().toISOString().split('T')[0] }
+        : {};
+
       const { error } = await supabase
         .from('routine_tasks')
         .insert({
@@ -64,12 +77,14 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
           name_no: formData.name_no,
           icon: formData.icon,
           sort_order: maxOrder + 1,
-          active: true
+          active: true,
+          schedule_type: formData.schedule_type,
+          schedule_config: scheduleConfig
         });
 
       if (error) throw error;
 
-      setFormData({ name_ar: '', name_no: '', icon: '📋' });
+      setFormData({ name_ar: '', name_no: '', icon: '📋', schedule_type: 'daily', interval_days: 1 });
       setShowAddForm(false);
       loadTasks();
     } catch (error) {
@@ -87,19 +102,25 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
     }
 
     try {
+      const scheduleConfig = formData.schedule_type === 'every_x_days'
+        ? { interval_days: formData.interval_days, last_completed: editingTask.schedule_config?.last_completed || new Date().toISOString().split('T')[0] }
+        : {};
+
       const { error } = await supabase
         .from('routine_tasks')
         .update({
           name_ar: formData.name_ar,
           name_no: formData.name_no,
-          icon: formData.icon
+          icon: formData.icon,
+          schedule_type: formData.schedule_type,
+          schedule_config: scheduleConfig
         })
         .eq('id', editingTask.id);
 
       if (error) throw error;
 
       setEditingTask(null);
-      setFormData({ name_ar: '', name_no: '', icon: '📋' });
+      setFormData({ name_ar: '', name_no: '', icon: '📋', schedule_type: 'daily', interval_days: 1 });
       loadTasks();
     } catch (error) {
       console.error('Error updating task:', error);
@@ -145,14 +166,16 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
     setFormData({
       name_ar: task.name_ar,
       name_no: task.name_no,
-      icon: task.icon
+      icon: task.icon,
+      schedule_type: task.schedule_type || 'daily',
+      interval_days: task.schedule_config?.interval_days || 1
     });
     setShowAddForm(false);
   };
 
   const cancelEdit = () => {
     setEditingTask(null);
-    setFormData({ name_ar: '', name_no: '', icon: '📋' });
+    setFormData({ name_ar: '', name_no: '', icon: '📋', schedule_type: 'daily', interval_days: 1 });
   };
 
   const popularIcons = ['✅', '🧹', '🗑️', '📦', '🚪', '🪟', '🚰', '🧼', '🧽', '🔧', '💡', '🌡️', '❄️', '🔥', '⚡', '💧', '🍽️', '🥤', '🍴'];
@@ -272,6 +295,58 @@ export default function TaskManagement({ onBack }: TaskManagementProps) {
                         {icon}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Scheduling Section */}
+                <div className="p-5 bg-white rounded-2xl border-2 border-amber-300">
+                  <label className="block text-lg font-bold text-gray-800 mb-3">
+                    {language === 'ar' ? '📅 جدولة المهمة' : '📅 Oppgavefrekvens'}
+                  </label>
+
+                  <div className="space-y-3">
+                    <select
+                      value={formData.schedule_type}
+                      onChange={(e) => setFormData({ ...formData, schedule_type: e.target.value as any })}
+                      className="w-full px-4 py-3 text-lg font-semibold border-2 border-amber-300 rounded-xl focus:ring-4 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-white"
+                    >
+                      <option value="daily">{language === 'ar' ? '🗓️ كل يوم' : '🗓️ Hver dag'}</option>
+                      <option value="every_x_days">{language === 'ar' ? '🔢 كل X يوم' : '🔢 Hver X dag'}</option>
+                      <option value="weekly">{language === 'ar' ? '📅 أسبوعي' : '📅 Ukentlig'}</option>
+                      <option value="monthly">{language === 'ar' ? '📆 شهري' : '📆 Månedlig'}</option>
+                    </select>
+
+                    {formData.schedule_type === 'every_x_days' && (
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          {language === 'ar' ? 'كل كم يوم؟' : 'Hvor mange dager?'}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="365"
+                          value={formData.interval_days}
+                          onChange={(e) => setFormData({ ...formData, interval_days: parseInt(e.target.value) || 1 })}
+                          className="w-full px-4 py-3 text-xl font-bold text-center border-2 border-amber-300 rounded-xl focus:ring-4 focus:ring-amber-500/50 focus:border-amber-500 transition-all bg-white"
+                        />
+                        <p className="mt-2 text-sm text-gray-600">
+                          {language === 'ar'
+                            ? `المهمة ستظهر كل ${formData.interval_days} ${formData.interval_days === 1 ? 'يوم' : formData.interval_days === 2 ? 'يومين' : 'أيام'}`
+                            : `Oppgaven vil vises hver ${formData.interval_days} ${formData.interval_days === 1 ? 'dag' : 'dager'}`
+                          }
+                        </p>
+                        <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                          <p className="text-sm text-blue-800 font-semibold">
+                            {language === 'ar' ? '💡 أمثلة:' : '💡 Eksempler:'}
+                          </p>
+                          <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                            <li>• {language === 'ar' ? '3 = كل 3 أيام (تنظيف الرفوف)' : '3 = Hver 3. dag (rengjøre hyller)'}</li>
+                            <li>• {language === 'ar' ? '7 = كل أسبوع (تنظيف الفلاتر)' : '7 = Hver uke (rengjøre filtre)'}</li>
+                            <li>• {language === 'ar' ? '30 = كل شهر (صيانة شهرية)' : '30 = Hver måned (månedlig vedlikehold)'}</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
