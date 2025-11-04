@@ -95,7 +95,14 @@ const speakText = async (text: string, lang: string = 'ar', volume: number = 1.0
           console.log('✅ Selected voice:', preferredVoice.name, preferredVoice.lang);
         } else {
           console.warn('⚠️ No preferred voice found for', langCode);
-          console.log('ℹ️ Will use browser default voice');
+          console.log('ℹ️ Will use browser default voice (may not pronounce correctly)');
+
+          if (lang === 'ar') {
+            console.log('💡 Tip: To hear Arabic voice properly:');
+            console.log('   • Chrome/Edge: Built-in Arabic voices available');
+            console.log('   • Windows: Settings > Time & Language > Speech > Add voices > Arabic');
+            console.log('   • Or use other notification sounds: Siren, Alarm, etc.');
+          }
         }
 
         utterance.onend = () => {
