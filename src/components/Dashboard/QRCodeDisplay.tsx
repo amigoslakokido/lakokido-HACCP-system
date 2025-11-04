@@ -1,23 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QrCode, Smartphone } from 'lucide-react';
 
 export function QRCodeDisplay() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const currentUrl = window.location.origin;
 
   useEffect(() => {
-    const generateQR = async () => {
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(currentUrl)}`;
-      setQrCodeUrl(qrApiUrl);
-    };
-
-    generateQR();
-  }, [currentUrl]);
+    const url = window.location.origin;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+    setQrCodeUrl(qrUrl);
+  }, []);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
           <QrCode className="w-6 h-6 text-white" />
         </div>
         <div>
@@ -26,24 +22,28 @@ export function QRCodeDisplay() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border-2 border-indigo-100">
+      <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-100">
         <div className="flex flex-col items-center gap-4">
-          {qrCodeUrl ? (
-            <div className="bg-white p-4 rounded-xl shadow-lg">
+          <div className="bg-white p-4 rounded-xl shadow-lg">
+            {qrCodeUrl ? (
               <img
                 src={qrCodeUrl}
                 alt="QR Code"
-                className="w-64 h-64"
+                className="w-72 h-72"
+                onError={(e) => {
+                  console.error('QR code failed to load');
+                  e.currentTarget.style.display = 'none';
+                }}
               />
-            </div>
-          ) : (
-            <div className="w-64 h-64 bg-slate-100 rounded-xl animate-pulse flex items-center justify-center">
-              <QrCode className="w-16 h-16 text-slate-400" />
-            </div>
-          )}
+            ) : (
+              <div className="w-72 h-72 bg-slate-100 rounded-xl animate-pulse flex items-center justify-center">
+                <QrCode className="w-16 h-16 text-slate-400" />
+              </div>
+            )}
+          </div>
 
           <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 text-indigo-600">
+            <div className="flex items-center justify-center gap-2 text-blue-600">
               <Smartphone className="w-5 h-5" />
               <span className="font-medium">Skann med mobilkamera</span>
             </div>
@@ -52,11 +52,11 @@ export function QRCodeDisplay() {
             </p>
           </div>
 
-          <div className="w-full pt-4 border-t border-indigo-200">
+          <div className="w-full pt-4 border-t border-blue-200">
             <div className="bg-white rounded-lg p-3">
               <p className="text-xs text-slate-500 text-center mb-1">Nettadresse:</p>
               <p className="text-sm font-mono text-slate-700 text-center break-all">
-                {currentUrl}
+                {window.location.origin}
               </p>
             </div>
           </div>
