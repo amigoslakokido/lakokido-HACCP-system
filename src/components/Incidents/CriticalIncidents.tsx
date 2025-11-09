@@ -53,7 +53,7 @@ export function CriticalIncidents() {
 
   useEffect(() => {
     loadIncidents();
-    const url = window.location.origin + '/#kritiske-hendelser';
+    const url = window.location.origin + '/mobile.html';
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url)}`;
     setQrCodeUrl(qrUrl);
   }, []);
@@ -795,7 +795,7 @@ export function CriticalIncidents() {
                     <div className="bg-white rounded-lg p-4">
                       <p className="text-xs text-slate-500 text-center mb-2 font-medium">Direktelenke:</p>
                       <p className="text-sm font-mono text-slate-700 text-center break-all bg-slate-50 px-3 py-2 rounded-lg">
-                        {window.location.origin}/#kritiske-hendelser
+                        {window.location.origin}/mobile.html
                       </p>
                     </div>
                   </div>
