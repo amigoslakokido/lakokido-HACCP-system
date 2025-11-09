@@ -224,7 +224,7 @@
           severity: document.getElementById('severity').value,
           incident_date: document.getElementById('date').value,
           status: 'open',
-          reported_by: 'Mobil bruker'
+          reported_by: '158784ee-1cb7-40c7-a2e2-160f059a5a7f'
         };
 
         const response = await fetch(SUPABASE_URL + '/rest/v1/critical_incidents?select=*', {
