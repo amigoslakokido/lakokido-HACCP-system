@@ -718,56 +718,63 @@ export function SettingsModule() {
 
   if (isLocked) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full border-2 border-white/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-700 via-blue-800 to-teal-700 flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-slate-100 to-white rounded-3xl shadow-2xl p-8 md:p-10 max-w-md w-full">
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Settings className="w-10 h-10 text-white" />
+            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+              <Settings className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-3xl font-black text-gray-800 mb-2">الإعدادات</h2>
-            <p className="text-xl font-bold text-gray-600">Innstillinger</p>
-            <p className="text-sm text-gray-500 mt-2">يرجى إدخال كلمة السر للوصول</p>
-            <p className="text-sm text-gray-500">Vennligst skriv inn passordet</p>
+            <h2 className="text-4xl font-black text-gray-800 mb-2" style={{direction: 'rtl'}}>الإعدادات</h2>
+            <p className="text-2xl font-bold text-gray-700 mb-4">Innstillinger</p>
+            <p className="text-sm text-gray-600 mt-3" style={{direction: 'rtl'}}>يرجى إدخال كلمة السر للوصول</p>
+            <p className="text-sm text-gray-600">Vennligst skriv inn passordet</p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                كلمة السر / Passord
+              <label className="block text-base font-bold text-gray-700 mb-3 text-center">
+                <span style={{direction: 'rtl', display: 'block'}}>كلمة السر</span>
+                <span className="text-gray-600">Passord</span>
               </label>
               <input
                 type="text"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-lg text-center font-bold"
+                className="w-full px-5 py-4 border-3 border-blue-300 rounded-2xl focus:ring-4 focus:ring-blue-400 focus:border-blue-500 transition-all text-xl text-center font-bold text-gray-700 shadow-sm"
                 placeholder="adminstrasjon"
                 autoFocus
                 autoComplete="off"
               />
               {showPasswordError && (
-                <p className="text-red-600 text-sm mt-2 font-semibold animate-shake">
+                <p className="text-red-600 text-sm mt-3 font-semibold text-center animate-pulse">
                   ❌ كلمة السر خاطئة / Feil passord
                 </p>
               )}
-              <p className="text-xs text-gray-400 mt-2 text-center">
-                💡 تلميح: adminstrasjon
+              <p className="text-sm text-amber-600 mt-3 text-center font-semibold flex items-center justify-center gap-2">
+                💡 <span style={{direction: 'rtl'}}>تلميح:</span> adminstrasjon
               </p>
             </div>
 
             <button
               onClick={handlePasswordSubmit}
               disabled={!passwordInput.trim()}
-              className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 text-white text-xl font-black rounded-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full px-6 py-5 bg-gradient-to-r from-blue-500 to-teal-500 text-white text-2xl font-black rounded-2xl hover:shadow-2xl hover:from-blue-600 hover:to-teal-600 transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg flex items-center justify-center gap-3"
             >
-              🔓 فتح / Åpne
+              <span className="text-3xl">🔓</span>
+              <span style={{direction: 'rtl'}}>فتح</span>
+              <span>/</span>
+              <span>Åpne</span>
             </button>
 
             <button
               onClick={handlePasswordReset}
-              className="w-full px-6 py-3 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all"
+              className="w-full px-6 py-3 bg-blue-50 text-blue-700 text-base font-bold rounded-xl hover:bg-blue-100 transition-all border-2 border-blue-200 flex items-center justify-center gap-2"
             >
-              ℹ️ معلومات كلمة السر / Passordinfo
+              <span className="text-lg">ℹ️</span>
+              <span style={{direction: 'rtl'}}>معلومات كلمة السر</span>
+              <span>/</span>
+              <span>Passordinfo</span>
             </button>
           </div>
         </div>
