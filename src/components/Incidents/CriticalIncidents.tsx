@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X, Camera, QrCode } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X, Camera, QrCode, Eye } from 'lucide-react';
 
 interface CriticalIncident {
   id: string;
@@ -50,6 +50,8 @@ export function CriticalIncidents() {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewIncident, setPreviewIncident] = useState<CriticalIncident | null>(null);
 
   useEffect(() => {
     loadIncidents();
@@ -543,6 +545,17 @@ export function CriticalIncidents() {
               </div>
               <div className="flex gap-2">
                 <button
+                  onClick={() => {
+                    setPreviewIncident(incident);
+                    loadAttachments(incident.id);
+                    setShowPreview(true);
+                  }}
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  title="Forhåndsvisning"
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <button
                   onClick={() => generatePDF(incident)}
                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Last ned PDF"
@@ -555,9 +568,9 @@ export function CriticalIncidents() {
                     loadAttachments(incident.id);
                   }}
                   className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Vis detaljer"
+                  title="Rediger og vedlegg"
                 >
-                  <FileText className="w-5 h-5" />
+                  <Edit2 className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(incident.id)}
@@ -598,6 +611,186 @@ export function CriticalIncidents() {
           </div>
         )}
       </div>
+
+      {showPreview && previewIncident && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 flex justify-between items-center rounded-t-lg">
+              <div className="flex items-center gap-3">
+                <Eye className="w-6 h-6" />
+                <div>
+                  <h3 className="text-xl font-bold">Forhåndsvisning av hendelsesrapport</h3>
+                  <p className="text-sm text-green-100">Profesjonell visning av rapport</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPreview(false);
+                  setPreviewIncident(null);
+                }}
+                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              <div className="border-b border-gray-200 pb-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Rapport-ID</p>
+                    <p className="text-sm font-mono text-gray-700">#{previewIncident.id.slice(0, 8)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</p>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${getStatusColor(previewIncident.status)}`}>
+                      {getStatusIcon(previewIncident.status)}
+                      {previewIncident.status === 'open' ? 'Åpen' : previewIncident.status === 'in_progress' ? 'Under behandling' : 'Løst'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Tittel på hendelsen</p>
+                  <h4 className="text-2xl font-bold text-gray-900">{previewIncident.title}</h4>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Alvorlighetsgrad</p>
+                    <span className={`inline-block px-4 py-2 rounded-lg text-sm font-bold border-2 ${getSeverityColor(previewIncident.severity)}`}>
+                      {previewIncident.severity === 'critical' ? 'Kritisk' : previewIncident.severity === 'high' ? 'Høy' : 'Middels'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Dato for hendelse</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {new Date(previewIncident.incident_date).toLocaleDateString('nb-NO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Beskrivelse av hendelsen</p>
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">{previewIncident.description}</p>
+                </div>
+
+                {previewIncident.ai_analysis && (
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-lg border border-blue-200">
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-3">AI-Analyse</p>
+                    <p className="text-blue-900 leading-relaxed whitespace-pre-line">{previewIncident.ai_analysis}</p>
+                  </div>
+                )}
+
+                {previewIncident.ai_consequences && (
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-5 rounded-lg border border-orange-200">
+                    <p className="text-xs font-semibold text-orange-700 uppercase tracking-wider mb-3">Mulige konsekvenser</p>
+                    <p className="text-orange-900 leading-relaxed whitespace-pre-line">{previewIncident.ai_consequences}</p>
+                  </div>
+                )}
+
+                {previewIncident.ai_solutions && (
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-5 rounded-lg border border-green-200">
+                    <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-3">Anbefalte tiltak og løsninger</p>
+                    <p className="text-green-900 leading-relaxed whitespace-pre-line">{previewIncident.ai_solutions}</p>
+                  </div>
+                )}
+
+                {attachments.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Vedlagte dokumenter ({attachments.length})</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      {attachments.map((attachment) => (
+                        <div key={attachment.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                          {attachment.file_type === 'image' ? (
+                            <img
+                              src={attachment.file_url}
+                              alt={attachment.file_name}
+                              className="w-full h-40 object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-40 bg-gray-100 flex items-center justify-center">
+                              <FileText className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="p-2 bg-gray-50">
+                            <p className="text-xs font-medium text-gray-900 truncate">{attachment.file_name}</p>
+                            <p className="text-xs text-gray-500">{(attachment.file_size / 1024).toFixed(1)} KB</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Rapportert dato</p>
+                    <p className="text-sm text-gray-700">
+                      {new Date(previewIncident.created_at).toLocaleString('nb-NO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                  {previewIncident.resolved_at && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Løst dato</p>
+                      <p className="text-sm text-gray-700">
+                        {new Date(previewIncident.resolved_at).toLocaleString('nb-NO', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex gap-3 rounded-b-lg">
+              <button
+                onClick={() => {
+                  setShowPreview(false);
+                  setSelectedIncident(previewIncident);
+                }}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center justify-center gap-2"
+              >
+                <Edit2 className="w-5 h-5" />
+                Rediger rapport
+              </button>
+              <button
+                onClick={() => generatePDF(previewIncident)}
+                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                Last ned PDF
+              </button>
+              <button
+                onClick={() => {
+                  setShowPreview(false);
+                  setPreviewIncident(null);
+                }}
+                className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Lukk
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedIncident && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
