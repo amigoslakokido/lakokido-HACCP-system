@@ -46,9 +46,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("employees")
       .select("id, name, role")
-      .not("role", "is", null);
+      .eq("status", "active");
 
     if (!profiles || profiles.length === 0) {
       throw new Error("No employees found");
@@ -65,7 +65,8 @@ Deno.serve(async (req: Request) => {
 
     const { data: cleaningTasks } = await supabase
       .from("cleaning_tasks")
-      .select("id, task_name");
+      .select("id, task_name, frequency")
+      .eq("active", true);
 
     if (!cleaningTasks || cleaningTasks.length === 0) {
       throw new Error("No cleaning tasks found");
@@ -90,9 +91,18 @@ Deno.serve(async (req: Request) => {
     const tempLogs: any[] = [];
     const usedEquipmentSlots = new Set<string>();
 
-    const targetViolations = Math.floor(Math.random() * 3) + 1;
+    const { count: totalReports } = await supabase
+      .from("daily_reports")
+      .select("*", { count: "exact", head: true });
+
+    const reportNumber = (totalReports || 0) + 1;
+    const shouldHaveCriticalViolation = reportNumber % 10 === 0;
+    const shouldHaveWarningViolation = reportNumber % 8 === 0 || reportNumber % 8 === 4;
+
     let criticalAdded = 0;
     let warningAdded = 0;
+    const maxCriticalViolations = shouldHaveCriticalViolation ? 1 : 0;
+    const maxWarningViolations = shouldHaveWarningViolation ? 1 : 0;
 
     for (let i = 0; i < numMeasurements; i++) {
       const equip = equipment[Math.floor(Math.random() * equipment.length)];
@@ -105,41 +115,37 @@ Deno.serve(async (req: Request) => {
       const employee =
         profiles[Math.floor(Math.random() * profiles.length)];
 
-      const shouldHaveViolation =
-        criticalAdded + warningAdded < targetViolations &&
-        Math.random() < 0.3;
+      const shouldHaveCritical =
+        criticalAdded < maxCriticalViolations && Math.random() < 0.2;
+      const shouldHaveWarning =
+        !shouldHaveCritical &&
+        warningAdded < maxWarningViolations &&
+        Math.random() < 0.25;
 
       let temperature: number;
       let status: string;
 
-      if (shouldHaveViolation) {
-        const isCritical = Math.random() < 0.5;
-
-        if (isCritical) {
-          const range = equip.max_temp - equip.min_temp;
-          const offset = Math.random() < 0.5 ? -1 : 1;
-          const deviation = 2 + Math.random() * 2;
-          temperature =
-            offset > 0
-              ? equip.max_temp + deviation
-              : equip.min_temp - deviation;
-          status = "danger";
-          criticalAdded++;
+      if (shouldHaveCritical) {
+        if (Math.random() < 0.5) {
+          temperature = parseFloat((equip.max_temp + 2 + Math.random() * 2).toFixed(1));
         } else {
-          const offset = Math.random() < 0.5 ? -1 : 1;
-          const deviation = 0.5 + Math.random() * 1.5;
-          temperature =
-            offset > 0
-              ? equip.max_temp + deviation
-              : equip.min_temp - deviation;
-          status = "warning";
-          warningAdded++;
+          temperature = parseFloat((equip.min_temp - 2 - Math.random() * 2).toFixed(1));
         }
+        status = "danger";
+        criticalAdded++;
+      } else if (shouldHaveWarning) {
+        if (Math.random() < 0.5) {
+          temperature = parseFloat((equip.min_temp - 0.5 - Math.random() * 1.5).toFixed(1));
+        } else {
+          temperature = parseFloat((equip.max_temp + 0.5 + Math.random() * 1.5).toFixed(1));
+        }
+        status = "warning";
+        warningAdded++;
       } else {
         const range = equip.max_temp - equip.min_temp;
-        const safeMargin = range * 0.3;
-        temperature =
-          equip.min_temp + safeMargin + Math.random() * (range - 2 * safeMargin);
+        const safeRange = range * 0.7;
+        const offset = range * 0.15;
+        temperature = parseFloat((equip.min_temp + offset + Math.random() * safeRange).toFixed(1));
         status = "safe";
       }
 
@@ -159,15 +165,24 @@ Deno.serve(async (req: Request) => {
     }
 
     const cleaningLogs: any[] = [];
-    const numCleaningTasks = Math.min(
-      cleaningTasks.length,
-      Math.floor(Math.random() * 3) + Math.floor(cleaningTasks.length * 0.6)
-    );
+    const todayDate = new Date(today);
+    const todayDayOfWeek = todayDate.getDay();
+    const todayDayOfMonth = todayDate.getDate();
+    const isFirstDayOfMonth = todayDayOfMonth === 1;
+    const isMonday = todayDayOfWeek === 1;
 
-    const shuffledTasks = [...cleaningTasks].sort(() => Math.random() - 0.5);
-    const selectedTasks = shuffledTasks.slice(0, numCleaningTasks);
+    const tasksForToday = cleaningTasks.filter((task: any) => {
+      if (task.frequency === 'daily') {
+        return true;
+      } else if (task.frequency === 'weekly') {
+        return isMonday;
+      } else if (task.frequency === 'monthly') {
+        return isFirstDayOfMonth;
+      }
+      return true;
+    });
 
-    for (const task of selectedTasks) {
+    for (const task of tasksForToday) {
       const employee =
         profiles[Math.floor(Math.random() * profiles.length)];
       const completed = Math.random() > 0.15;
@@ -175,11 +190,11 @@ Deno.serve(async (req: Request) => {
 
       cleaningLogs.push({
         task_id: task.id,
-        performed_by: employee.id,
-        status: completed ? "completed" : "pending",
+        completed_by: employee.id,
+        status: completed ? "completed" : "incomplete",
         log_date: today,
-        log_time: completed ? time : null,
-        notes: completed ? "" : "Ikke utført",
+        log_time: time,
+        notes: completed ? "Utført som planlagt" : "Ikke utført",
       });
     }
 
@@ -188,29 +203,19 @@ Deno.serve(async (req: Request) => {
     }
 
     const hygieneChecks: any[] = [];
-    const managers = profiles.filter(
-      (e: any) => e.role === "daglig_leder" || e.role === "kontrollor"
-    );
     const allStaff = profiles;
 
-    let selectedEmployees: any[] = [];
+    let numEmployeesForDay: number;
     if (isWeekend) {
-      const numEmployees = Math.floor(Math.random() * 3) + 2;
-      const shuffled = managers.length > 0
-          ? [...managers].sort(() => Math.random() - 0.5)
-          : [...allStaff].sort(() => Math.random() - 0.5);
-      selectedEmployees = shuffled.slice(0, numEmployees);
+      numEmployeesForDay = Math.floor(Math.random() * 2) + 3;
     } else {
-      const numEmployees = Math.floor(Math.random() * 2) + 3;
-      const shuffled = [...allStaff].sort(() => Math.random() - 0.5);
-      selectedEmployees = shuffled.slice(0, numEmployees);
+      numEmployeesForDay = Math.random() < 0.5 ? 2 : 3;
     }
 
-    const hygieneEmployees = selectedEmployees.filter(
-      (e: any) => e.role === "daglig_leder" || e.role === "kontrollor"
-    );
+    const shuffledEmployees = [...allStaff].sort(() => Math.random() - 0.5);
+    const selectedEmployees = shuffledEmployees.slice(0, Math.min(numEmployeesForDay, allStaff.length));
 
-    for (const employee of hygieneEmployees) {
+    for (const employee of selectedEmployees) {
       const allOk = Math.random() > 0.1;
       hygieneChecks.push({
         check_date: today,
@@ -237,11 +242,11 @@ Deno.serve(async (req: Request) => {
 
     const coolingLogs: any[] = [];
     let coolingViolationsAdded = 0;
-    const maxCoolingViolations = criticalAdded > 0 || warningAdded > 0 ? 1 : 0;
+    const maxCoolingViolations = shouldHaveCriticalViolation || shouldHaveWarningViolation ? 1 : 0;
 
     for (const product of selectedProducts) {
       const shouldViolate =
-        coolingViolationsAdded < maxCoolingViolations && Math.random() < 0.1;
+        coolingViolationsAdded < maxCoolingViolations && Math.random() < 0.05;
 
       let initialTemp: number;
       let finalTemp: number;

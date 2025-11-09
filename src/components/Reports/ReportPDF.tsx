@@ -67,14 +67,13 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
   const completedCleaning = cleaningLogs?.filter(l => l.status === 'completed').length || 0;
   const totalCleaning = cleaningLogs?.length || 0;
 
-  // Use hygiene checks to determine managers (only managers have hygiene checks)
+  // Use hygiene checks to determine managers (only daglig_leder signs)
   const managerNames = new Set<string>();
   hygieneChecks?.forEach(check => {
     if (check.staff_name) managerNames.add(check.staff_name);
   });
   const managers = Array.from(managerNames);
-  const supervisor = managers[0] || 'Ikke tildelt';
-  const manager = managers[1] || managers[0] || 'Ikke tildelt';
+  const dagligLeder = managers[0] || 'Ikke tildelt';
 
   return (
     <>
@@ -426,24 +425,15 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
 
           <div className="border-t-2 border-slate-300 pt-6 mt-8">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Underskrifter</h3>
-              <p className="text-sm text-slate-600 mb-4">Dette dokumentet er utarbeidet av følgende ledere:</p>
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">Underskrift</h3>
+              <p className="text-sm text-slate-600 mb-4">Dette dokumentet er godkjent av Daglig leder:</p>
             </div>
-            <div className="grid grid-cols-2 gap-8">
-              {supervisor && supervisor !== 'Ikke tildelt' && (
+            <div className="max-w-md">
+              {dagligLeder && dagligLeder !== 'Ikke tildelt' && (
                 <div>
-                  <div className="text-sm text-slate-600 mb-2">Underskrift Daglig leder/Kontrollør:</div>
+                  <div className="text-sm text-slate-600 mb-2">Underskrift Daglig leder:</div>
                   <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
-                    <span className="text-slate-700 font-medium italic">{supervisor}</span>
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
-                </div>
-              )}
-              {manager && manager !== 'Ikke tildelt' && manager !== supervisor && (
-                <div>
-                  <div className="text-sm text-slate-600 mb-2">Underskrift Daglig leder/Kontrollør:</div>
-                  <div className="border-b-2 border-slate-400 h-16 flex items-end pb-2">
-                    <span className="text-slate-700 font-medium italic">{manager}</span>
+                    <span className="text-slate-700 font-medium italic">{dagligLeder}</span>
                   </div>
                   <div className="text-xs text-slate-500 mt-1">{formatDate(report.report_date)}</div>
                 </div>
@@ -452,7 +442,7 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
           </div>
 
           <div className="mt-8 text-center text-xs text-slate-500 border-t pt-4">
-            <p>Dette dokumentet er utarbeidet av ledere og kontrollører i Amigos Lakokido AS</p>
+            <p>Dette dokumentet er godkjent av Daglig leder i Amigos Lakokido AS</p>
             <p className="mt-1 font-semibold text-slate-600">HACCP-Amigos System v1.0.0</p>
             <p className="mt-1">For spørsmål, kontakt: amigoslakokido@gmail.com</p>
           </div>

@@ -40,10 +40,10 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
 
     const reportNumber = (totalReports || 0) + 1;
 
-    // Critical violations: 1-2 every 6 reports
-    const shouldHaveCriticalViolation = reportNumber % 6 === 0 || reportNumber % 6 === 3;
-    // Warning violations: 1-2 every 4 reports
-    const shouldHaveWarningViolation = reportNumber % 4 === 0 || reportNumber % 4 === 2;
+    // Critical violations: 1 every 10 reports (reduced from every 6)
+    const shouldHaveCriticalViolation = reportNumber % 10 === 0;
+    // Warning violations: 1 every 8 reports (reduced from every 4)
+    const shouldHaveWarningViolation = reportNumber % 8 === 0 || reportNumber % 8 === 4;
 
     // Separate managers (daglig_leder + kontrollor) from regular staff
     const managers = profiles.filter(p => p.role === 'daglig_leder' || p.role === 'kontrollor');
@@ -57,8 +57,8 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
 
     let criticalViolationsAdded = 0;
     let warningViolationsAdded = 0;
-    const maxCriticalViolations = shouldHaveCriticalViolation ? (Math.random() < 0.5 ? 1 : 2) : 0;
-    const maxWarningViolations = shouldHaveWarningViolation ? (Math.random() < 0.5 ? 1 : 2) : 0;
+    const maxCriticalViolations = shouldHaveCriticalViolation ? 1 : 0;
+    const maxWarningViolations = shouldHaveWarningViolation ? 1 : 0;
 
     for (const item of items) {
       const minTemp = parseFloat(item.min_temp);
@@ -68,16 +68,16 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       let temp: number;
       let status: 'safe' | 'warning' | 'danger';
 
-      // Try critical violation first
+      // Try critical violation first (reduced probability from 0.4 to 0.2)
       const shouldHaveCritical = includeViolations &&
                                 criticalViolationsAdded < maxCriticalViolations &&
-                                Math.random() < 0.4;
+                                Math.random() < 0.2;
 
-      // Then try warning violation
+      // Then try warning violation (reduced probability from 0.4 to 0.25)
       const shouldHaveWarning = !shouldHaveCritical &&
                                includeViolations &&
                                warningViolationsAdded < maxWarningViolations &&
-                               Math.random() < 0.4;
+                               Math.random() < 0.25;
 
       if (shouldHaveCritical) {
         if (Math.random() < 0.5) {
@@ -119,7 +119,25 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       });
     }
 
-    for (const task of tasks) {
+    // Filter tasks based on frequency and date
+    const dateObj = new Date(date + 'T12:00:00');
+    const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayOfMonth = dateObj.getDate();
+    const isFirstDayOfMonth = dayOfMonth === 1;
+    const isMonday = dayOfWeek === 1;
+
+    const tasksForToday = tasks.filter(task => {
+      if (task.frequency === 'daily') {
+        return true;
+      } else if (task.frequency === 'weekly') {
+        return isMonday;
+      } else if (task.frequency === 'monthly') {
+        return isFirstDayOfMonth;
+      }
+      return true;
+    });
+
+    for (const task of tasksForToday) {
       const shouldComplete = Math.random() > 0.1;
       const time = timeSlots[Math.floor(Math.random() * timeSlots.length)];
       const randomProfile = profiles[Math.floor(Math.random() * profiles.length)];
@@ -162,31 +180,20 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       await supabase.from('cleaning_logs').insert(cleaningLogs);
     }
 
-    const dateObj = new Date(date + 'T12:00:00');
-    const dayOfWeek = dateObj.getDay();
-
-    // Hygiene checks only for managers
-    let selectedEmployees;
+    // Hygiene checks - show all active employees who work that day
+    let numEmployeesForDay;
     if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      // Monday-Thursday: 2 employees (prefer managers)
-      const numEmployees = 2;
-      const shuffled = managers.length >= numEmployees
-        ? [...managers].sort(() => Math.random() - 0.5)
-        : [...allStaff].sort(() => Math.random() - 0.5);
-      selectedEmployees = shuffled.slice(0, numEmployees);
+      // Monday-Thursday: 2-3 employees
+      numEmployeesForDay = Math.random() < 0.5 ? 2 : 3;
     } else {
-      // Friday-Sunday: 3-4 employees (prefer managers first)
-      const numEmployees = Math.floor(Math.random() * 2) + 3;
-      const shuffled = [...allStaff].sort(() => Math.random() - 0.5);
-      selectedEmployees = shuffled.slice(0, numEmployees);
+      // Friday-Sunday: 3-4 employees
+      numEmployeesForDay = Math.floor(Math.random() * 2) + 3;
     }
 
-    // Ensure only managers in hygiene checks
-    const hygieneEmployees = selectedEmployees.filter(e =>
-      e.role === 'daglig_leder' || e.role === 'kontrollor'
-    );
+    const shuffledEmployees = [...allStaff].sort(() => Math.random() - 0.5);
+    const selectedEmployees = shuffledEmployees.slice(0, Math.min(numEmployeesForDay, allStaff.length));
 
-    for (const employee of hygieneEmployees) {
+    for (const employee of selectedEmployees) {
       const allOk = Math.random() > 0.1;
       hygieneChecks.push({
         check_date: date,
@@ -221,7 +228,7 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
     for (const product of selectedProducts) {
       const shouldViolate = includeViolations &&
                            coolingViolationsAdded < maxCoolingViolations &&
-                           Math.random() < 0.1;
+                           Math.random() < 0.05;
 
       let initialTemp: number;
       let finalTemp: number;

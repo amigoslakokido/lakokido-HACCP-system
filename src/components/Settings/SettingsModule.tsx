@@ -110,10 +110,15 @@ export function SettingsModule() {
   const [editingEmployeeStatus, setEditingEmployeeStatus] = useState<'active' | 'paused'>('active');
 
   const [addingTask, setAddingTask] = useState(false);
+  const [editingTask, setEditingTask] = useState<string | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskFrequency, setNewTaskFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [newTaskZoneId, setNewTaskZoneId] = useState<string>('');
+  const [editingTaskName, setEditingTaskName] = useState('');
+  const [editingTaskDescription, setEditingTaskDescription] = useState('');
+  const [editingTaskFrequency, setEditingTaskFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [editingTaskZoneId, setEditingTaskZoneId] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -599,10 +604,22 @@ export function SettingsModule() {
     if (!confirm('Er du sikker på at du vil slette denne ansatte? Ansatte vil fortsatt vises i tidligere rapporter.')) return;
 
     try {
-      await supabase.from('employees').delete().eq('id', employeeId);
-      setEmployees(employees.filter(e => e.id !== employeeId));
+      const { data } = await supabase
+        .from('employees')
+        .update({
+          active: false,
+          status: 'paused',
+        })
+        .eq('id', employeeId)
+        .select()
+        .single();
+
+      if (data) {
+        setEmployees(employees.filter(e => e.id !== employeeId));
+      }
     } catch (error) {
       console.error('Error deleting employee:', error);
+      alert('Det oppstod en feil ved sletting av ansatt');
     }
   };
 
@@ -636,6 +653,47 @@ export function SettingsModule() {
     } catch (error) {
       console.error('Error adding task:', error);
       alert('Det oppstod en feil ved opprettelse av oppgave');
+    }
+  };
+
+  const startEditingTask = (task: CleaningTask) => {
+    setEditingTask(task.id);
+    setEditingTaskName(task.task_name);
+    setEditingTaskDescription(task.description || '');
+    setEditingTaskFrequency(task.frequency as 'daily' | 'weekly' | 'monthly');
+    setEditingTaskZoneId(task.zone_id || '');
+  };
+
+  const updateTask = async (taskId: string) => {
+    if (!editingTaskName.trim()) {
+      alert('Vennligst skriv inn et navn for oppgaven');
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from('cleaning_tasks')
+        .update({
+          task_name: editingTaskName,
+          description: editingTaskDescription,
+          frequency: editingTaskFrequency,
+          zone_id: editingTaskZoneId || null,
+        })
+        .eq('id', taskId)
+        .select()
+        .single();
+
+      if (data) {
+        setTasks(tasks.map(t => t.id === taskId ? data : t));
+        setEditingTask(null);
+        setEditingTaskName('');
+        setEditingTaskDescription('');
+        setEditingTaskFrequency('daily');
+        setEditingTaskZoneId('');
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      alert('Det oppstod en feil ved oppdatering av oppgave');
     }
   };
 
@@ -1868,22 +1926,87 @@ export function SettingsModule() {
           )}
 
           {tasks.map((task) => (
-            <div key={task.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-lg">
-              <div className="flex-1">
-                <div className="font-semibold text-slate-900">{task.task_name}</div>
-                {task.description && (
-                  <div className="text-sm text-slate-600">{task.description}</div>
-                )}
-                <div className="text-xs text-slate-500 mt-1">
-                  {task.frequency === 'daily' ? 'Daglig' : task.frequency === 'weekly' ? 'Ukentlig' : 'Månedlig'}
+            <div key={task.id} className="bg-slate-50 p-4 rounded-lg">
+              {editingTask === task.id ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={editingTaskName}
+                    onChange={(e) => setEditingTaskName(e.target.value)}
+                    placeholder="Oppgavenavn"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={editingTaskDescription}
+                    onChange={(e) => setEditingTaskDescription(e.target.value)}
+                    placeholder="Beskrivelse (valgfritt)"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  />
+                  <select
+                    value={editingTaskZoneId}
+                    onChange={(e) => setEditingTaskZoneId(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="">Ingen sone</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>{zone.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={editingTaskFrequency}
+                    onChange={(e) => setEditingTaskFrequency(e.target.value as any)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="daily">Daglig</option>
+                    <option value="weekly">Ukentlig</option>
+                    <option value="monthly">Månedlig</option>
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateTask(task.id)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      Lagre
+                    </button>
+                    <button
+                      onClick={() => setEditingTask(null)}
+                      className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <button
-                onClick={() => deleteTask(task.id)}
-                className="p-2 hover:bg-red-100 rounded"
-              >
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </button>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="font-semibold text-slate-900">{task.task_name}</div>
+                    {task.description && (
+                      <div className="text-sm text-slate-600">{task.description}</div>
+                    )}
+                    <div className="text-xs text-slate-500 mt-1">
+                      {task.frequency === 'daily' ? 'Daglig' : task.frequency === 'weekly' ? 'Ukentlig' : 'Månedlig'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => startEditingTask(task)}
+                      className="p-2 hover:bg-blue-100 rounded"
+                      title="Rediger"
+                    >
+                      <Edit2 className="w-4 h-4 text-blue-600" />
+                    </button>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      className="p-2 hover:bg-red-100 rounded"
+                      title="Slett"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X, Camera } from 'lucide-react';
 
 interface CriticalIncident {
   id: string;
@@ -44,6 +44,10 @@ export function CriticalIncidents() {
   const [aiLoading, setAiLoading] = useState(false);
   const [attachments, setAttachments] = useState<IncidentAttachment[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     loadIncidents();
@@ -176,14 +180,60 @@ export function CriticalIncidents() {
     }
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, incidentId: string) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false
+      });
 
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+
+      setCameraStream(stream);
+      setShowCamera(true);
+    } catch (error) {
+      console.error('Camera error:', error);
+      alert('Kunne ikke åpne kamera. Sjekk tillatelser.');
+    }
+  }
+
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(false);
+  }
+
+  async function capturePhoto() {
+    if (!videoRef.current || !canvasRef.current || !selectedIncident) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      await uploadFile(file, selectedIncident.id);
+      stopCamera();
+    }, 'image/jpeg', 0.9);
+  }
+
+  async function uploadFile(file: File, incidentId: string) {
     setUploadingFiles(true);
 
     try {
-      // Get first active employee as default uploader
       const { data: employees } = await supabase
         .from('employees')
         .select('id')
@@ -194,36 +244,39 @@ export function CriticalIncidents() {
         ? employees[0].id
         : '00000000-0000-0000-0000-000000000000';
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const reader = new FileReader();
+      const fileDataUrl = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
 
-        // Convert file to base64 for simple storage in database
-        const reader = new FileReader();
-        const fileDataUrl = await new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
+      const fileType = file.type.startsWith('image/') ? 'image' : 'document';
 
-        const fileType = file.type;
-
-        // Save attachment record with embedded data
-        await supabase.from('incident_attachments').insert({
-          incident_id: incidentId,
-          file_name: file.name,
-          file_url: fileDataUrl, // Store as data URL
-          file_type: fileType,
-          file_size: file.size,
-          uploaded_by: uploaderId,
-        });
-      }
+      await supabase.from('incident_attachments').insert({
+        incident_id: incidentId,
+        file_name: file.name,
+        file_url: fileDataUrl,
+        file_type: fileType,
+        file_size: file.size,
+        uploaded_by: uploaderId,
+      });
 
       loadAttachments(incidentId);
-      alert('Filer lastet opp vellykket');
+      alert('Fil lastet opp vellykket');
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Det oppstod en feil ved opplasting av filer');
+      alert('Det oppstod en feil ved opplasting');
     } finally {
       setUploadingFiles(false);
+    }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, incidentId: string) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      await uploadFile(files[i], incidentId);
     }
   }
 
@@ -575,18 +628,28 @@ export function CriticalIncidents() {
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-semibold">Vedlegg</h4>
-                  <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
-                    <Upload className="w-4 h-4" />
-                    Last opp filer
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx"
-                      onChange={(e) => handleFileUpload(e, selectedIncident.id)}
-                      className="hidden"
+                  <div className="flex gap-2">
+                    <button
+                      onClick={startCamera}
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 cursor-pointer transition-colors"
                       disabled={uploadingFiles}
-                    />
-                  </label>
+                    >
+                      <Camera className="w-4 h-4" />
+                      Ta bilde
+                    </button>
+                    <label className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors">
+                      <Upload className="w-4 h-4" />
+                      Last opp filer
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx"
+                        onChange={(e) => handleFileUpload(e, selectedIncident.id)}
+                        className="hidden"
+                        disabled={uploadingFiles}
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 {attachments.length === 0 ? (
@@ -617,6 +680,48 @@ export function CriticalIncidents() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCamera && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden">
+            <div className="p-4 bg-gray-800 text-white flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Ta bilde</h3>
+              <button
+                onClick={stopCamera}
+                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative bg-black">
+              <video
+                ref={videoRef}
+                className="w-full h-auto"
+                autoPlay
+                playsInline
+              />
+              <canvas ref={canvasRef} className="hidden" />
+            </div>
+
+            <div className="p-4 flex justify-center gap-3">
+              <button
+                onClick={capturePhoto}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2"
+              >
+                <Camera className="w-5 h-5" />
+                Ta bilde
+              </button>
+              <button
+                onClick={stopCamera}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Avbryt
+              </button>
             </div>
           </div>
         </div>
