@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X, Camera } from 'lucide-react';
+import { AlertTriangle, Plus, Trash2, Edit2, CheckCircle, Clock, FileText, Upload, Download, X, Camera, QrCode } from 'lucide-react';
 
 interface CriticalIncident {
   id: string;
@@ -48,9 +48,14 @@ export function CriticalIncidents() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   useEffect(() => {
     loadIncidents();
+    const url = window.location.origin + '/#kritiske-hendelser';
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+    setQrCodeUrl(qrUrl);
   }, []);
 
   async function loadIncidents() {
@@ -419,13 +424,22 @@ export function CriticalIncidents() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Kritiske hendelser</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Ny hendelse
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowQRCode(!showQRCode)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <QrCode className="w-5 h-5" />
+            QR-kode
+          </button>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Ny hendelse
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -722,6 +736,115 @@ export function CriticalIncidents() {
               >
                 Avbryt
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQRCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-blue-600 to-cyan-600 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <QrCode className="w-8 h-8" />
+                <div>
+                  <h3 className="text-xl font-bold">QR-kode for mobiltilgang</h3>
+                  <p className="text-sm text-blue-100">Skann for direktetilgang på mobil</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowQRCode(false)}
+                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8">
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border-2 border-blue-100">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="bg-white p-4 rounded-xl shadow-lg">
+                    {qrCodeUrl ? (
+                      <img
+                        src={qrCodeUrl}
+                        alt="QR Code for Critical Incidents"
+                        className="w-64 h-64"
+                        onError={(e) => {
+                          console.error('QR code failed to load');
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-64 h-64 bg-slate-100 rounded-xl animate-pulse flex items-center justify-center">
+                        <QrCode className="w-16 h-16 text-slate-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-blue-600">
+                      <Camera className="w-5 h-5" />
+                      <span className="font-semibold">Skann med mobilkamera</span>
+                    </div>
+                    <p className="text-sm text-slate-600 max-w-sm">
+                      Mobilversjonen gir deg mulighet til å ta bilder direkte med kameraet og rapportere kritiske hendelser på stedet
+                    </p>
+                  </div>
+
+                  <div className="w-full pt-4 border-t border-blue-200">
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-xs text-slate-500 text-center mb-2 font-medium">Direktelenke:</p>
+                      <p className="text-sm font-mono text-slate-700 text-center break-all bg-slate-50 px-3 py-2 rounded-lg">
+                        {window.location.origin}/#kritiske-hendelser
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 mb-2">Slik bruker du QR-koden:</p>
+                    <ul className="text-xs text-amber-700 space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-amber-600 mt-0.5">1.</span>
+                        <span>Åpne kameraappen på mobiltelefonen din</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-amber-600 mt-0.5">2.</span>
+                        <span>Rett kameraet mot QR-koden ovenfor</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-amber-600 mt-0.5">3.</span>
+                        <span>Trykk på varselet som dukker opp på skjermen</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="font-bold text-amber-600 mt-0.5">4.</span>
+                        <span>Nå kan du rapportere hendelser og ta bilder direkte fra mobilen</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <div className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg p-3 text-center">
+                  <Camera className="w-6 h-6 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Ta bilder direkte</p>
+                </div>
+                <div className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg p-3 text-center">
+                  <Upload className="w-6 h-6 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Last opp vedlegg</p>
+                </div>
+                <div className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg p-3 text-center">
+                  <AlertTriangle className="w-6 h-6 mx-auto mb-1" />
+                  <p className="text-xs font-medium">Rapporter hendelser</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
