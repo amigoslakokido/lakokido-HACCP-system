@@ -175,14 +175,9 @@
     <div class="footer">HACCP Digital - LA kokido</div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const { createClient } = supabase;
-
-    const client = createClient(
-      'https://elytkfyxfjxscupnkmqp.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVseXRrZnl4Zmp4c2N1cG5rbXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NjAxNzgsImV4cCI6MjA3NzMzNjE3OH0.ZJjCpKLtZs3fuu6BLd7N3cfvCTjeblqkUQ9lWcEolDk'
-    );
+    const SUPABASE_URL = 'https://elytkfyxfjxscupnkmqp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVseXRrZnl4Zmp4c2N1cG5rbXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NjAxNzgsImV4cCI6MjA3NzMzNjE3OH0.ZJjCpKLtZs3fuu6BLd7N3cfvCTjeblqkUQ9lWcEolDk';
 
     let selectedFiles = [];
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
@@ -223,47 +218,72 @@
       msg.className = 'hidden';
 
       try {
-        const result = await client
-          .from('critical_incidents')
-          .insert([{
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            severity: document.getElementById('severity').value,
-            incident_date: document.getElementById('date').value,
-            status: 'open',
-            reported_by: 'Mobil bruker'
-          }])
-          .select()
-          .single();
+        const incidentData = {
+          title: document.getElementById('title').value,
+          description: document.getElementById('description').value,
+          severity: document.getElementById('severity').value,
+          incident_date: document.getElementById('date').value,
+          status: 'open',
+          reported_by: 'Mobil bruker'
+        };
 
-        if (result.error) throw result.error;
+        const response = await fetch(SUPABASE_URL + '/rest/v1/critical_incidents?select=*', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(incidentData)
+        });
 
-        const incident = result.data;
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Feil ved lagring');
+        }
+
+        const incidents = await response.json();
+        const incident = incidents[0];
 
         if (selectedFiles.length > 0) {
           for (let i = 0; i < selectedFiles.length; i++) {
             const file = selectedFiles[i];
             const ext = file.name.split('.').pop();
-            const path = 'incidents/' + incident.id + '-' + Date.now() + '.' + ext;
+            const fileName = incident.id + '-' + Date.now() + '.' + ext;
+            const filePath = 'incidents/' + fileName;
 
-            const uploadResult = await client.storage
-              .from('haccp-attachments')
-              .upload(path, file);
+            const uploadResponse = await fetch(
+              SUPABASE_URL + '/storage/v1/object/haccp-attachments/' + filePath,
+              {
+                method: 'POST',
+                headers: {
+                  'apikey': SUPABASE_KEY,
+                  'Authorization': 'Bearer ' + SUPABASE_KEY,
+                  'Content-Type': file.type
+                },
+                body: file
+              }
+            );
 
-            if (!uploadResult.error) {
-              const urlResult = client.storage
-                .from('haccp-attachments')
-                .getPublicUrl(path);
+            if (uploadResponse.ok) {
+              const publicUrl = SUPABASE_URL + '/storage/v1/object/public/haccp-attachments/' + filePath;
 
-              await client
-                .from('incident_attachments')
-                .insert([{
+              await fetch(SUPABASE_URL + '/rest/v1/incident_attachments', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': SUPABASE_KEY,
+                  'Authorization': 'Bearer ' + SUPABASE_KEY
+                },
+                body: JSON.stringify({
                   incident_id: incident.id,
                   file_name: file.name,
-                  file_url: urlResult.data.publicUrl,
+                  file_url: publicUrl,
                   file_type: 'image',
                   file_size: file.size
-                }]);
+                })
+              });
             }
           }
         }
