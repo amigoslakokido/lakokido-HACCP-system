@@ -67,13 +67,25 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
   const completedCleaning = cleaningLogs?.filter(l => l.status === 'completed').length || 0;
   const totalCleaning = cleaningLogs?.length || 0;
 
-  // Use hygiene checks to determine managers (only daglig_leder signs)
-  const managerNames = new Set<string>();
-  hygieneChecks?.forEach(check => {
-    if (check.staff_name) managerNames.add(check.staff_name);
-  });
-  const managers = Array.from(managerNames);
-  const dagligLeder = managers[0] || 'Ikke tildelt';
+  // Get Daglig leder from temperature logs (only daglig_leder signs reports)
+  let dagligLeder = 'Ikke tildelt';
+
+  // Try to find daglig_leder from temperature logs
+  const dagligLederFromLogs = tempLogs?.find(log =>
+    log.employees?.role === 'daglig_leder'
+  );
+
+  if (dagligLederFromLogs) {
+    dagligLeder = dagligLederFromLogs.employees.name;
+  } else {
+    // Try to find from cleaning logs
+    const dagligLederFromCleaning = cleaningLogs?.find(log =>
+      log.employees?.role === 'daglig_leder'
+    );
+    if (dagligLederFromCleaning) {
+      dagligLeder = dagligLederFromCleaning.employees.name;
+    }
+  }
 
   return (
     <>

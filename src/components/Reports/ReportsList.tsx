@@ -148,7 +148,7 @@ export function ReportsList() {
             max_temp,
             zones (name)
           ),
-          employees:recorded_by (name)
+          employees:recorded_by (name, role)
         `)
         .eq('log_date', report.report_date)
         .order('log_time', { ascending: true });
@@ -161,7 +161,7 @@ export function ReportsList() {
         .select(`
           *,
           cleaning_tasks (task_name, frequency),
-          employees:completed_by (name)
+          employees:completed_by (name, role)
         `)
         .eq('log_date', report.report_date)
         .order('log_time', { ascending: true });
