@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DailyRoutine from './components/RoutineTasks/DailyRoutine';
 import RoutineReportsList from './components/RoutineTasks/RoutineReportsList';
 import { TemperatureControl } from './components/Temperature/TemperatureControl';
@@ -11,6 +11,32 @@ import { ClipboardCheck, Thermometer, Sparkles, FileText, Settings, Menu, X, Ale
 export default function App() {
   const [currentView, setCurrentView] = useState('routine');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const viewMap: Record<string, string> = {
+        'kritiske-hendelser': 'incidents',
+        'daglige-rutiner': 'routine',
+        'temperaturkontroll': 'temperature',
+        'rengjoring': 'cleaning',
+        'rapporter': 'reports',
+        'rutinerapporter': 'routine-reports',
+        'innstillinger': 'settings',
+      };
+
+      if (hash && viewMap[hash]) {
+        setCurrentView(viewMap[hash]);
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
 
   const navigation = [
     { id: 'routine', name: 'Daglige rutiner', icon: ClipboardCheck },

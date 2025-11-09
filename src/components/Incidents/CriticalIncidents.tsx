@@ -54,7 +54,7 @@ export function CriticalIncidents() {
   useEffect(() => {
     loadIncidents();
     const url = window.location.origin + '/#kritiske-hendelser';
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(url)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url)}`;
     setQrCodeUrl(qrUrl);
   }, []);
 
