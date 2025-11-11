@@ -223,6 +223,26 @@ export const hmsApi = {
     return { data, error };
   },
 
+  // Training
+  async createTrainingSession(session: Partial<HMSTrainingSession>) {
+    const { data, error } = await supabase
+      .from('hms_training')
+      .insert(session)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  // Maintenance
+  async createMaintenance(maintenance: Partial<HMSMaintenance>) {
+    const { data, error } = await supabase
+      .from('hms_maintenance')
+      .insert(maintenance)
+      .select()
+      .single();
+    return { data, error };
+  },
+
   // Statistics
   async getDashboardStats() {
     const today = new Date().toISOString().split('T')[0];

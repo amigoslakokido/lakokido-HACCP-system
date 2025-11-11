@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { HMSDashboard } from './HMSDashboard';
 import { IncidentLogger } from './IncidentLogger';
+import { Analytics } from './Analytics';
+import { Reports } from './Reports';
+import { Training } from './Training';
+import { Maintenance } from './Maintenance';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -10,7 +14,8 @@ import {
   Settings,
   Menu,
   X,
-  Shield
+  Shield,
+  TrendingUp
 } from 'lucide-react';
 
 export function HMSApp() {
@@ -20,6 +25,7 @@ export function HMSApp() {
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', nameAr: 'لوحة التحكم', icon: LayoutDashboard },
     { id: 'incidents', name: 'Hendelser', nameAr: 'الحوادث', icon: AlertTriangle },
+    { id: 'analytics', name: 'Analyser', nameAr: 'التحليلات', icon: TrendingUp },
     { id: 'reports', name: 'Rapporter', nameAr: 'التقارير', icon: FileText },
     { id: 'training', name: 'Opplæring', nameAr: 'التدريب', icon: GraduationCap },
     { id: 'maintenance', name: 'Vedlikehold', nameAr: 'الصيانة', icon: Wrench },
@@ -32,30 +38,14 @@ export function HMSApp() {
         return <HMSDashboard />;
       case 'incidents':
         return <IncidentLogger />;
+      case 'analytics':
+        return <Analytics />;
       case 'reports':
-        return (
-          <div className="text-center py-16">
-            <FileText className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-700 mb-2">Rapporter</h2>
-            <p className="text-slate-500">Kommer snart - قريباً</p>
-          </div>
-        );
+        return <Reports />;
       case 'training':
-        return (
-          <div className="text-center py-16">
-            <GraduationCap className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-700 mb-2">Opplæring</h2>
-            <p className="text-slate-500">Kommer snart - قريباً</p>
-          </div>
-        );
+        return <Training />;
       case 'maintenance':
-        return (
-          <div className="text-center py-16">
-            <Wrench className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-700 mb-2">Vedlikehold</h2>
-            <p className="text-slate-500">Kommer snart - قريباً</p>
-          </div>
-        );
+        return <Maintenance />;
       case 'settings':
         return (
           <div className="text-center py-16">
