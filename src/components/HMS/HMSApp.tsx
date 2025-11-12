@@ -5,7 +5,6 @@ import { Analytics } from './Analytics';
 import { Reports } from './Reports';
 import { Training } from './Training';
 import { Maintenance } from './Maintenance';
-import { Settings } from './Settings';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -48,7 +47,13 @@ export function HMSApp() {
       case 'maintenance':
         return <Maintenance />;
       case 'settings':
-        return <Settings />;
+        return (
+          <div className="text-center py-16">
+            <Settings className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-slate-700 mb-2">Innstillinger</h2>
+            <p className="text-slate-500">Kommer snart - قريباً</p>
+          </div>
+        );
       default:
         return <HMSDashboard />;
     }
