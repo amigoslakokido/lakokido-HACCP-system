@@ -5,6 +5,7 @@ import { Analytics } from './Analytics';
 import { Reports } from './Reports';
 import { Training } from './Training';
 import { Maintenance } from './Maintenance';
+import { CompanySettings } from './CompanySettings';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -15,7 +16,8 @@ import {
   Menu,
   X,
   Shield,
-  TrendingUp
+  TrendingUp,
+  Building2
 } from 'lucide-react';
 
 export function HMSApp() {
@@ -29,6 +31,7 @@ export function HMSApp() {
     { id: 'reports', name: 'Rapporter', nameAr: 'التقارير', icon: FileText },
     { id: 'training', name: 'Opplæring', nameAr: 'التدريب', icon: GraduationCap },
     { id: 'maintenance', name: 'Vedlikehold', nameAr: 'الصيانة', icon: Wrench },
+    { id: 'company', name: 'Bedrift', nameAr: 'الشركة', icon: Building2 },
     { id: 'settings', name: 'Innstillinger', nameAr: 'الإعدادات', icon: Settings },
   ];
 
@@ -46,6 +49,8 @@ export function HMSApp() {
         return <Training />;
       case 'maintenance':
         return <Maintenance />;
+      case 'company':
+        return <CompanySettings />;
       case 'settings':
         return (
           <div className="text-center py-16">
