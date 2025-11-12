@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase, Zone, Equipment, CleaningTask, Employee } from '../../lib/supabase';
-import { Settings, Plus, Edit2, Trash2, Save, X, Users, Thermometer, Briefcase, Clock, Bell, BellRing, Mail, AlertTriangle, Volume2, Maximize2, Zap, Timer, Play } from 'lucide-react';
+import { Settings, Plus, Edit2, Trash2, Save, X, Users, Thermometer, Briefcase, Clock, Bell, BellRing, Mail, AlertTriangle, Volume2, Maximize2, Zap, Timer, Play, Building2 } from 'lucide-react';
 import { NOTIFICATION_SOUNDS, playSound } from '../../utils/notificationSounds';
 import { AdminReportsSection } from './AdminReportsSection';
+import { CompanyModule } from '../Company/CompanyModule';
 
 interface ScheduledReportConfig {
   id: string;
@@ -39,6 +40,7 @@ interface NotificationSettings {
 }
 
 export function SettingsModule() {
+  const [activeSection, setActiveSection] = useState<'settings' | 'company'>('settings');
   const [zones, setZones] = useState<(Zone & { equipment: Equipment[] })[]>([]);
   const [tasks, setTasks] = useState<CleaningTask[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -792,14 +794,42 @@ export function SettingsModule() {
           <h2 className="text-2xl font-bold text-slate-900">Innstillinger</h2>
           <p className="text-slate-600">Administrer soner, utstyr og ansatte</p>
         </div>
-        <button
-          onClick={() => setIsLocked(true)}
-          className="ml-auto px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all font-bold text-sm"
-        >
-          🔒 قفل / Lås
-        </button>
+        <div className="ml-auto flex gap-2">
+          <button
+            onClick={() => setActiveSection('settings')}
+            className={`px-4 py-2 rounded-lg transition-all font-bold text-sm ${
+              activeSection === 'settings'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
+          >
+            <Settings className="w-4 h-4 inline mr-1" />
+            Innstillinger
+          </button>
+          <button
+            onClick={() => setActiveSection('company')}
+            className={`px-4 py-2 rounded-lg transition-all font-bold text-sm ${
+              activeSection === 'company'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}
+          >
+            <Building2 className="w-4 h-4 inline mr-1" />
+            Firmainfo
+          </button>
+          <button
+            onClick={() => setIsLocked(true)}
+            className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all font-bold text-sm"
+          >
+            🔒 قفل / Lås
+          </button>
+        </div>
       </div>
 
+      {activeSection === 'company' ? (
+        <CompanyModule />
+      ) : (
+        <>
       {/* Notification Settings Section */}
       <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-3xl shadow-xl border-2 border-blue-200/50 overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600 to-emerald-600 px-6 py-5 flex items-center justify-between">
@@ -2020,6 +2050,8 @@ export function SettingsModule() {
       </div>
 
       <AdminReportsSection />
+      </>
+      )}
     </div>
   );
 }

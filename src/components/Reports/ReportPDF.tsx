@@ -1,6 +1,8 @@
 import { DailyReport } from '../../lib/supabase';
+import { companyApi, CompanyInfo } from '../../lib/companyApi';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { useEffect, useState } from 'react';
 
 interface ReportPDFProps {
   report: DailyReport;
@@ -11,6 +13,17 @@ interface ReportPDFProps {
 }
 
 export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], coolingLogs = [] }: ReportPDFProps) {
+  const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
+
+  useEffect(() => {
+    loadCompanyInfo();
+  }, []);
+
+  const loadCompanyInfo = async () => {
+    const { data } = await companyApi.getCompanyInfo();
+    if (data) setCompanyInfo(data);
+  };
+
   const handleDownloadPDF = async () => {
     const element = document.getElementById('printable-report');
     if (!element) return;
@@ -125,10 +138,17 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
         <div className="border-4 border-slate-800 p-8">
           <div className="flex items-start justify-between mb-8 pb-6 border-b-2 border-slate-300">
             <div className="flex items-center gap-4">
-              <img src="/visas.jpg" alt="LA kokido Logo" className="w-24 h-24 object-contain" />
+              <img src="/visas.jpg" alt="Company Logo" className="w-24 h-24 object-contain" />
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">LA kokido</h1>
+                <h1 className="text-3xl font-bold text-slate-900">
+                  {companyInfo?.company_name || 'Amigos la Kokido AS'}
+                </h1>
                 <p className="text-slate-600 mt-1">HACCP Daglig Kontrollrapport</p>
+                {companyInfo && (
+                  <p className="text-sm text-slate-500 mt-1">
+                    Org.nr: {companyInfo.org_number} | {companyInfo.phone}
+                  </p>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -150,7 +170,12 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">🏢 Bedrift</div>
-              <div className="text-lg font-semibold text-slate-900 mt-1">Amigos Lakokido AS</div>
+              <div className="text-lg font-semibold text-slate-900 mt-1">
+                {companyInfo?.company_name || 'Amigos la Kokido AS'}
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                {companyInfo?.address || 'Trondheimsveien 2, 0560 Oslo'}
+              </div>
             </div>
             <div>
               <div className="text-sm text-slate-600 font-medium">📊 Status</div>
@@ -454,9 +479,15 @@ export function ReportPDF({ report, tempLogs, cleaningLogs, hygieneChecks = [], 
           </div>
 
           <div className="mt-8 text-center text-xs text-slate-500 border-t pt-4">
-            <p>Dette dokumentet er godkjent av Daglig leder i Amigos Lakokido AS</p>
-            <p className="mt-1 font-semibold text-slate-600">HACCP-Amigos System v1.0.0</p>
-            <p className="mt-1">For spørsmål, kontakt: amigoslakokido@gmail.com</p>
+            <p>Dette dokumentet er godkjent av Daglig leder i {companyInfo?.company_name || 'Amigos la Kokido AS'}</p>
+            {companyInfo?.manager_name && (
+              <p className="mt-1 font-semibold text-slate-700">Daglig leder: {companyInfo.manager_name}</p>
+            )}
+            <p className="mt-1 font-semibold text-slate-600">HACCP-HMS System v1.0.0</p>
+            <p className="mt-1">For spørsmål, kontakt: {companyInfo?.email || 'order@amigoslakokido.com'}</p>
+            {companyInfo?.website && (
+              <p className="mt-1">{companyInfo.website}</p>
+            )}
           </div>
         </div>
       </div>
