@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { HMSDashboard } from './HMSDashboard';
 import { IncidentLogger } from './IncidentLogger';
-import { Analytics } from './Analytics';
 import { Reports } from './Reports';
 import { Training } from './Training';
 import { Maintenance } from './Maintenance';
@@ -27,7 +26,6 @@ export function HMSApp() {
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', nameAr: 'لوحة التحكم', icon: LayoutDashboard },
     { id: 'incidents', name: 'Hendelser', nameAr: 'الحوادث', icon: AlertTriangle },
-    { id: 'analytics', name: 'Analyser', nameAr: 'التحليلات', icon: TrendingUp },
     { id: 'reports', name: 'Rapporter', nameAr: 'التقارير', icon: FileText },
     { id: 'training', name: 'Opplæring', nameAr: 'التدريب', icon: GraduationCap },
     { id: 'maintenance', name: 'Vedlikehold', nameAr: 'الصيانة', icon: Wrench },
@@ -41,8 +39,6 @@ export function HMSApp() {
         return <HMSDashboard />;
       case 'incidents':
         return <IncidentLogger />;
-      case 'analytics':
-        return <Analytics />;
       case 'reports':
         return <Reports />;
       case 'training':
