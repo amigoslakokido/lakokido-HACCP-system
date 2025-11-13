@@ -223,7 +223,7 @@ export function HMSApp() {
         return <Goals />;
       case 'goals-policies':
         return <Policies />;
-      case 'goals-organization':
+      case 'goals-orgchart':
         return <OrganizationChart />;
       case 'company-info':
         return <CompanySettings />;
