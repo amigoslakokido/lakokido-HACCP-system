@@ -9,6 +9,7 @@ import { Goals } from './Goals';
 import { Policies } from './Policies';
 import { OrganizationChart } from './OrganizationChart';
 import { SafetyRepresentative } from './SafetyRepresentative';
+import { PersonalList } from './PersonalList';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -82,6 +83,7 @@ export function HMSApp() {
       icon: Building2,
       items: [
         { id: 'company-info', name: 'Firmaopplysninger', icon: Building2 },
+        { id: 'company-personnel', name: 'Personalliste', icon: Users },
         { id: 'company-contacts', name: 'Kontakter', icon: Users },
         { id: 'company-insurance', name: 'Forsikringer', icon: Shield },
         { id: 'company-verneombud', name: 'Verneombud', icon: ShieldCheck },
@@ -229,6 +231,8 @@ export function HMSApp() {
         return <OrganizationChart />;
       case 'goals-safety-rep':
         return <SafetyRepresentative />;
+      case 'company-personnel':
+        return <PersonalList />;
       case 'company-info':
         return <CompanySettings />;
       case 'training-courses':
