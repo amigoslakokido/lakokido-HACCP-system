@@ -41,7 +41,8 @@ import {
   Globe,
   TrendingUp,
   BadgeCheck,
-  ShieldCheck
+  ShieldCheck,
+  Network
 } from 'lucide-react';
 
 export function HMSApp() {
@@ -67,7 +68,7 @@ export function HMSApp() {
       items: [
         { id: 'goals-hms', name: 'HMS-mål', icon: Target },
         { id: 'goals-policies', name: 'Policyer', icon: FileCheck },
-        { id: 'goals-strategy', name: 'Strategiplan', icon: TrendingUp },
+        { id: 'goals-orgchart', name: 'Organisasjonskart', icon: Network },
       ]
     },
     {
@@ -86,11 +87,7 @@ export function HMSApp() {
       name: '👥 Ansatte',
       icon: Users,
       items: [
-        { id: 'employees-list', name: 'Ansattliste', icon: Users },
-        { id: 'employees-contracts', name: 'Kontrakter', icon: FileText },
-        { id: 'employees-schedule', name: 'Turnus', icon: Calendar },
-        { id: 'employees-absence', name: 'Fravær', icon: Clock },
-        { id: 'employees-competence', name: 'Kompetanse', icon: BadgeCheck },
+        { id: 'employees-list', name: 'Personalliste', icon: Users },
       ]
     },
     {

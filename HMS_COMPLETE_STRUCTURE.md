@@ -19,7 +19,7 @@
 **HMS-mål og policyer**
 - 🔄 **HMS-mål** - Bedriftens HMS-målsettinger
 - 🔄 **Policyer** - HMS-policyer og retningslinjer
-- 🔄 **Strategiplan** - Langsiktig HMS-strategi
+- 🔄 **Organisasjonskart** - Organisasjonsstruktur og ansvarsomåder
 
 **Total**: 3 undermeny
 
@@ -37,14 +37,10 @@
 ---
 
 ### 4. 👥 Ansatte
-**Personale + Kontrakter + Turnus**
-- 🔄 **Ansattliste** - Register over alle ansatte
-- 🔄 **Kontrakter** - Arbeidsavtaler og dokumenter
-- 🔄 **Turnus** - Vaklister og turnusplaner
-- 🔄 **Fravær** - Sykefravær og egenmelding
-- 🔄 **Kompetanse** - Kompetanseoversikt og kvalifikasjoner
+**Personalliste**
+- 🔄 **Personalliste** - Komplett register over alle ansatte
 
-**Total**: 5 undermeny
+**Total**: 1 undermeny
 
 ---
 
@@ -151,10 +147,10 @@
 
 | Kategori | Hovedmoduler | Undermoduler | Implementert |
 |----------|--------------|--------------|--------------|
-| **Totalt** | 13 | 49 | ~20% |
+| **Totalt** | 13 | 45 | ~20% |
 | ✅ Ferdig | 5 | 8 | 100% |
 | 🔄 Under utvikling | 2 | 6 | 30% |
-| 📋 Planlagt | 6 | 35 | 0% |
+| 📋 Planlagt | 6 | 31 | 0% |
 
 ---
 
@@ -170,7 +166,7 @@
 🎯 Målsetting ▼
   ├─ HMS-mål
   ├─ Policyer
-  └─ Strategiplan
+  └─ Organisasjonskart
 
 🏢 Bedrift ▼
   ├─ Firmaopplysninger
