@@ -43,12 +43,14 @@ export function SafetyRepresentative() {
 
   const loadSafetyRep = async () => {
     setLoading(true);
-    const { data } = await hmsApi.execute_sql(
-      `SELECT * FROM hms_safety_representative ORDER BY appointed_date DESC LIMIT 1`
-    );
+    const { data, error } = await hmsApi.getSafetyRepresentative();
 
-    if (data && data.length > 0) {
-      setSafetyRep(data[0]);
+    if (error) {
+      console.error('Error loading safety representative:', error);
+    }
+
+    if (data) {
+      setSafetyRep(data);
     }
     setLoading(false);
   };
@@ -56,33 +58,9 @@ export function SafetyRepresentative() {
   const handleSave = async () => {
     try {
       if (safetyRep.id) {
-        await hmsApi.execute_sql(
-          `UPDATE hms_safety_representative SET
-            name = '${safetyRep.name}',
-            position = '${safetyRep.position}',
-            phone = '${safetyRep.phone}',
-            email = '${safetyRep.email}',
-            appointed_date = '${safetyRep.appointed_date}',
-            term_years = ${safetyRep.term_years},
-            manager_name = '${safetyRep.manager_name}',
-            manager_signature_date = '${safetyRep.manager_signature_date}',
-            rep_signature_date = '${safetyRep.rep_signature_date}',
-            company_org_number = '${safetyRep.company_org_number}'
-          WHERE id = '${safetyRep.id}'`
-        );
+        await hmsApi.updateSafetyRepresentative(safetyRep.id, safetyRep);
       } else {
-        await hmsApi.execute_sql(
-          `INSERT INTO hms_safety_representative
-          (name, position, phone, email, appointed_date, term_years, manager_name,
-           manager_signature_date, rep_signature_date, company_name, company_org_number, company_address)
-          VALUES (
-            '${safetyRep.name}', '${safetyRep.position}', '${safetyRep.phone}',
-            '${safetyRep.email}', '${safetyRep.appointed_date}', ${safetyRep.term_years},
-            '${safetyRep.manager_name}', '${safetyRep.manager_signature_date}',
-            '${safetyRep.rep_signature_date}', '${safetyRep.company_name}',
-            '${safetyRep.company_org_number}', '${safetyRep.company_address}'
-          )`
-        );
+        await hmsApi.createSafetyRepresentative(safetyRep);
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

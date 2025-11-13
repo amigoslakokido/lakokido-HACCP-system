@@ -302,4 +302,34 @@ export const hmsApi = {
       .eq('id', id);
     return { data, error };
   },
+
+  // Safety Representative Management
+  async getSafetyRepresentative() {
+    const { data, error } = await supabase
+      .from('hms_safety_representative')
+      .select('*')
+      .order('appointed_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { data, error };
+  },
+
+  async createSafetyRepresentative(safetyRep: any) {
+    const { data, error } = await supabase
+      .from('hms_safety_representative')
+      .insert(safetyRep)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updateSafetyRepresentative(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_safety_representative')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
 };
