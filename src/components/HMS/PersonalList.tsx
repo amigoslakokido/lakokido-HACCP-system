@@ -52,9 +52,10 @@ export function PersonalList() {
 
   const loadEmployees = async () => {
     setLoading(true);
-    const { data } = await hmsApi.execute_sql(
-      `SELECT * FROM hms_personnel ORDER BY created_at DESC`
-    );
+    const { data, error } = await hmsApi.getPersonnel();
+    if (error) {
+      console.error('Error loading personnel:', error);
+    }
     if (data) {
       setEmployees(data);
     }
@@ -85,34 +86,9 @@ export function PersonalList() {
 
     try {
       if (editingId) {
-        await hmsApi.execute_sql(
-          `UPDATE hms_personnel SET
-            full_name = '${formData.full_name}',
-            position = '${formData.position}',
-            phone = '${formData.phone}',
-            email = '${formData.email}',
-            hire_date = '${formData.hire_date}',
-            employment_type = '${formData.employment_type}',
-            department = '${formData.department}',
-            emergency_contact_name = '${formData.emergency_contact_name}',
-            emergency_contact_phone = '${formData.emergency_contact_phone}',
-            notes = '${formData.notes.replace(/'/g, "''")}',
-            status = '${formData.status}'
-          WHERE id = '${editingId}'`
-        );
+        await hmsApi.updatePersonnel(editingId, formData);
       } else {
-        await hmsApi.execute_sql(
-          `INSERT INTO hms_personnel
-          (full_name, position, phone, email, hire_date, employment_type, department,
-           emergency_contact_name, emergency_contact_phone, notes, status)
-          VALUES (
-            '${formData.full_name}', '${formData.position}', '${formData.phone}',
-            '${formData.email}', '${formData.hire_date}', '${formData.employment_type}',
-            '${formData.department}', '${formData.emergency_contact_name}',
-            '${formData.emergency_contact_phone}', '${formData.notes.replace(/'/g, "''")}',
-            '${formData.status}'
-          )`
-        );
+        await hmsApi.createPersonnel(formData);
       }
 
       setSaved(true);
@@ -134,7 +110,7 @@ export function PersonalList() {
     if (!confirm('Er du sikker på at du vil slette denne ansatte?')) return;
 
     try {
-      await hmsApi.execute_sql(`DELETE FROM hms_personnel WHERE id = '${id}'`);
+      await hmsApi.deletePersonnel(id);
       loadEmployees();
     } catch (error) {
       console.error('Error deleting employee:', error);

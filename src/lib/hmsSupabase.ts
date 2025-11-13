@@ -266,4 +266,40 @@ export const hmsApi = {
       avgComplianceScore: reports?.reduce((sum, r) => sum + r.compliance_score, 0) / (reports?.length || 1) || 100,
     };
   },
+
+  // Personnel Management
+  async getPersonnel() {
+    const { data, error } = await supabase
+      .from('hms_personnel')
+      .select('*')
+      .order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  async createPersonnel(personnel: any) {
+    const { data, error } = await supabase
+      .from('hms_personnel')
+      .insert(personnel)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updatePersonnel(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_personnel')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async deletePersonnel(id: string) {
+    const { data, error } = await supabase
+      .from('hms_personnel')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
 };
