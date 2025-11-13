@@ -6,6 +6,7 @@ import { Training } from './Training';
 import { Maintenance } from './Maintenance';
 import { CompanySettings } from './CompanySettings';
 import { Goals } from './Goals';
+import { Policies } from './Policies';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -219,6 +220,8 @@ export function HMSApp() {
         return <HMSDashboard />;
       case 'goals-hms':
         return <Goals />;
+      case 'goals-policies':
+        return <Policies />;
       case 'company-info':
         return <CompanySettings />;
       case 'training-courses':
