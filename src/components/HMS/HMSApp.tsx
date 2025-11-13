@@ -10,6 +10,7 @@ import { Policies } from './Policies';
 import { OrganizationChart } from './OrganizationChart';
 import { SafetyRepresentative } from './SafetyRepresentative';
 import { PersonalList } from './PersonalList';
+import { Insurance } from './Insurance';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -233,6 +234,8 @@ export function HMSApp() {
         return <SafetyRepresentative />;
       case 'company-info':
         return <CompanySettings />;
+      case 'company-insurance':
+        return <Insurance />;
       case 'training-courses':
         return <Training />;
       case 'incidents-log':

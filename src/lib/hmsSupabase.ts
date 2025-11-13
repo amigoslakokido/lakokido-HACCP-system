@@ -332,4 +332,40 @@ export const hmsApi = {
       .single();
     return { data, error };
   },
+
+  // Insurance Companies Management
+  async getInsuranceCompanies() {
+    const { data, error } = await supabase
+      .from('hms_insurance_companies')
+      .select('*')
+      .order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  async createInsuranceCompany(insurance: any) {
+    const { data, error } = await supabase
+      .from('hms_insurance_companies')
+      .insert(insurance)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updateInsuranceCompany(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_insurance_companies')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async deleteInsuranceCompany(id: string) {
+    const { data, error } = await supabase
+      .from('hms_insurance_companies')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
 };
