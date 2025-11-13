@@ -47,7 +47,8 @@ import {
   TrendingUp,
   BadgeCheck,
   ShieldCheck,
-  Network
+  Network,
+  UserCheck
 } from 'lucide-react';
 
 export function HMSApp() {
