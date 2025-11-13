@@ -84,10 +84,7 @@ export function HMSApp() {
       icon: Building2,
       items: [
         { id: 'company-info', name: 'Firmaopplysninger', icon: Building2 },
-        { id: 'company-personnel', name: 'Personalliste', icon: Users },
-        { id: 'company-contacts', name: 'Kontakter', icon: Users },
         { id: 'company-insurance', name: 'Forsikringer', icon: Shield },
-        { id: 'company-verneombud', name: 'Verneombud', icon: ShieldCheck },
       ]
     },
     {
@@ -96,6 +93,7 @@ export function HMSApp() {
       icon: Users,
       items: [
         { id: 'employees-list', name: 'Personalliste', icon: Users },
+        { id: 'employees-verneombud', name: 'Verneombud', icon: ShieldCheck },
       ]
     },
     {
@@ -232,8 +230,10 @@ export function HMSApp() {
         return <OrganizationChart />;
       case 'goals-safety-rep':
         return <SafetyRepresentative />;
-      case 'company-personnel':
+      case 'employees-list':
         return <PersonalList />;
+      case 'employees-verneombud':
+        return <SafetyRepresentative />;
       case 'company-info':
         return <CompanySettings />;
       case 'training-courses':
