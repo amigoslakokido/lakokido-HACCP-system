@@ -26,36 +26,188 @@ import {
   Leaf,
   Mail,
   MapPin,
-  FileStack
+  FileStack,
+  ChevronDown,
+  ChevronRight,
+  FileCheck,
+  Heart,
+  Package,
+  Clock,
+  AlertCircle,
+  BookOpen,
+  Calendar,
+  CheckSquare,
+  Briefcase,
+  Globe,
+  TrendingUp,
+  BadgeCheck,
+  ShieldCheck
 } from 'lucide-react';
 
 export function HMSApp() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['dashboard']);
 
   const navigationItems = [
-    { id: 'dashboard', name: '📊 Dashboard', icon: LayoutDashboard, description: 'Oversikt + Analyse + Innsikt' },
-    { id: 'goals', name: '🎯 Målsetting', icon: Target, description: 'HMS-mål og policyer' },
-    { id: 'company', name: '🏢 Bedrift', icon: Building2, description: 'Firmainfo + Kontakter + Forsikringer' },
-    { id: 'employees', name: '👥 Ansatte', icon: Users, description: 'Personale + Kontrakter + Turnus' },
-    { id: 'health-safety', name: '🏥 Helse & Sikkerhet', icon: HeartPulse, description: 'BHT + Førstehjelp + Risikoanalyse' },
-    { id: 'emergency', name: '🔥 Beredskap', icon: Flame, description: 'Brann + Evakuering + Beredskap' },
-    { id: 'training', name: '🎓 Opplæring', icon: GraduationCap, description: 'Kurs + Sertifikater' },
-    { id: 'incidents', name: '⚠️ Hendelser', icon: AlertTriangle, description: 'Hendelser + Avvik' },
-    { id: 'internal-control', name: '✅ Internkontroll', icon: Search, description: 'Revisjon + Kontroller' },
-    { id: 'environment', name: '🌍 Miljø', icon: Leaf, description: 'Miljø + Partnere' },
-    { id: 'documents', name: '📁 Dokumenter', icon: FileStack, description: 'Dokumenter + Tegninger' },
-    { id: 'compliance', name: '⚖️ Compliance', icon: Scale, description: 'Lovverk + GDPR' },
-    { id: 'reports', name: '📊 Rapporter', icon: FileText, description: 'Rapporter + Statistikk' },
+    {
+      id: 'dashboard',
+      name: '📊 Dashboard',
+      icon: LayoutDashboard,
+      items: [
+        { id: 'dashboard-overview', name: 'Oversikt', icon: TrendingUp },
+        { id: 'dashboard-analytics', name: 'Analyser', icon: TrendingUp },
+        { id: 'dashboard-insights', name: 'Innsikt', icon: TrendingUp },
+      ]
+    },
+    {
+      id: 'goals',
+      name: '🎯 Målsetting',
+      icon: Target,
+      items: [
+        { id: 'goals-hms', name: 'HMS-mål', icon: Target },
+        { id: 'goals-policies', name: 'Policyer', icon: FileCheck },
+        { id: 'goals-strategy', name: 'Strategiplan', icon: TrendingUp },
+      ]
+    },
+    {
+      id: 'company',
+      name: '🏢 Bedrift',
+      icon: Building2,
+      items: [
+        { id: 'company-info', name: 'Firmaopplysninger', icon: Building2 },
+        { id: 'company-contacts', name: 'Kontakter', icon: Users },
+        { id: 'company-insurance', name: 'Forsikringer', icon: Shield },
+        { id: 'company-verneombud', name: 'Verneombud', icon: ShieldCheck },
+      ]
+    },
+    {
+      id: 'employees',
+      name: '👥 Ansatte',
+      icon: Users,
+      items: [
+        { id: 'employees-list', name: 'Ansattliste', icon: Users },
+        { id: 'employees-contracts', name: 'Kontrakter', icon: FileText },
+        { id: 'employees-schedule', name: 'Turnus', icon: Calendar },
+        { id: 'employees-absence', name: 'Fravær', icon: Clock },
+        { id: 'employees-competence', name: 'Kompetanse', icon: BadgeCheck },
+      ]
+    },
+    {
+      id: 'health-safety',
+      name: '🏥 Helse & Sikkerhet',
+      icon: HeartPulse,
+      items: [
+        { id: 'health-bht', name: 'BHT-avtale', icon: HeartPulse },
+        { id: 'health-firstaid', name: 'Førstehjelp', icon: Heart },
+        { id: 'health-risk', name: 'Risikoanalyse', icon: AlertCircle },
+        { id: 'health-work-env', name: 'Arbeidsmiljø', icon: Shield },
+      ]
+    },
+    {
+      id: 'emergency',
+      name: '🔥 Beredskap',
+      icon: Flame,
+      items: [
+        { id: 'emergency-fire', name: 'Brannsikkerhet', icon: Flame },
+        { id: 'emergency-evacuation', name: 'Evakuering', icon: AlertCircle },
+        { id: 'emergency-plan', name: 'Beredskapsplan', icon: FileCheck },
+        { id: 'emergency-drills', name: 'Øvelser', icon: CheckSquare },
+      ]
+    },
+    {
+      id: 'training',
+      name: '🎓 Opplæring',
+      icon: GraduationCap,
+      items: [
+        { id: 'training-courses', name: 'Kurs', icon: BookOpen },
+        { id: 'training-certificates', name: 'Sertifikater', icon: BadgeCheck },
+        { id: 'training-plans', name: 'Opplæringsplaner', icon: Calendar },
+        { id: 'training-confirmations', name: 'Bekreftelser', icon: CheckSquare },
+      ]
+    },
+    {
+      id: 'incidents',
+      name: '⚠️ Hendelser',
+      icon: AlertTriangle,
+      items: [
+        { id: 'incidents-log', name: 'Hendelseslogg', icon: AlertTriangle },
+        { id: 'incidents-deviations', name: 'Avvik', icon: AlertCircle },
+        { id: 'incidents-actions', name: 'Tiltak', icon: CheckSquare },
+        { id: 'incidents-statistics', name: 'Statistikk', icon: TrendingUp },
+      ]
+    },
+    {
+      id: 'internal-control',
+      name: '✅ Internkontroll',
+      icon: Search,
+      items: [
+        { id: 'control-audit', name: 'Internrevisjon', icon: Search },
+        { id: 'control-electrical', name: 'Elektrisk anlegg', icon: Zap },
+        { id: 'control-maintenance', name: 'Vedlikehold', icon: Wrench },
+        { id: 'control-checklist', name: 'Sjekklister', icon: CheckSquare },
+      ]
+    },
+    {
+      id: 'environment',
+      name: '🌍 Miljø',
+      icon: Leaf,
+      items: [
+        { id: 'environment-policy', name: 'Miljøpolicy', icon: FileCheck },
+        { id: 'environment-waste', name: 'Avfallshåndtering', icon: Package },
+        { id: 'environment-partners', name: 'Miljøpartnere', icon: Users },
+        { id: 'environment-sustainability', name: 'Bærekraft', icon: Globe },
+      ]
+    },
+    {
+      id: 'documents',
+      name: '📁 Dokumenter',
+      icon: FileStack,
+      items: [
+        { id: 'documents-archive', name: 'Dokumentarkiv', icon: FileStack },
+        { id: 'documents-drawings', name: 'Tegninger', icon: MapPin },
+        { id: 'documents-contracts', name: 'Kontrakter', icon: FileText },
+        { id: 'documents-correspondence', name: 'Korrespondanse', icon: Mail },
+      ]
+    },
+    {
+      id: 'compliance',
+      name: '⚖️ Compliance',
+      icon: Scale,
+      items: [
+        { id: 'compliance-laws', name: 'Lovverk', icon: Scale },
+        { id: 'compliance-gdpr', name: 'GDPR', icon: Shield },
+        { id: 'compliance-checklists', name: 'Sjekklister', icon: CheckSquare },
+        { id: 'compliance-certificates', name: 'Godkjenninger', icon: BadgeCheck },
+      ]
+    },
+    {
+      id: 'reports',
+      name: '📊 Rapporter',
+      icon: FileText,
+      items: [
+        { id: 'reports-generate', name: 'Generer rapport', icon: FileText },
+        { id: 'reports-archive', name: 'Rapportarkiv', icon: FileStack },
+        { id: 'reports-statistics', name: 'Statistikk', icon: TrendingUp },
+        { id: 'reports-export', name: 'Eksporter', icon: FileCheck },
+      ]
+    },
   ];
 
-  const PlaceholderView = ({ icon: Icon, name, description }: any) => (
+  const toggleItem = (id: string) => {
+    setExpandedItems(prev =>
+      prev.includes(id)
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    );
+  };
+
+  const PlaceholderView = ({ icon: Icon, name }: any) => (
     <div className="text-center py-16">
       <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
         <Icon className="w-10 h-10 text-purple-600" />
       </div>
       <h2 className="text-3xl font-bold text-slate-900 mb-2">{name}</h2>
-      <p className="text-slate-500 max-w-md mx-auto">{description}</p>
       <div className="mt-8">
         <p className="text-sm text-slate-400">Kommer snart</p>
       </div>
@@ -63,26 +215,31 @@ export function HMSApp() {
   );
 
   const renderView = () => {
-    const currentItem = navigationItems.find(item => item.id === currentView);
-
     switch (currentView) {
+      case 'dashboard-overview':
       case 'dashboard':
         return <HMSDashboard />;
-      case 'company':
+      case 'company-info':
         return <CompanySettings />;
-      case 'training':
+      case 'training-courses':
         return <Training />;
-      case 'incidents':
+      case 'incidents-log':
         return <IncidentLogger />;
-      case 'reports':
+      case 'reports-generate':
+      case 'reports-archive':
         return <Reports />;
+      case 'control-maintenance':
+        return <Maintenance />;
 
       default:
+        const currentItem = navigationItems
+          .flatMap(group => group.items)
+          .find(item => item.id === currentView);
+
         return currentItem ? (
           <PlaceholderView
             icon={currentItem.icon}
             name={currentItem.name}
-            description={currentItem.description}
           />
         ) : <HMSDashboard />;
     }
@@ -90,7 +247,7 @@ export function HMSApp() {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0 overflow-y-auto`}>
         <div className="p-6 border-b border-slate-200">
@@ -105,29 +262,50 @@ export function HMSApp() {
           </div>
         </div>
 
-        <nav className="p-3">
-          {navigationItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                setCurrentView(item.id);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 mb-1 rounded-lg transition-all text-left ${
-                currentView === item.id
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-200'
-                  : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              <span className="text-lg">{item.name.split(' ')[0]}</span>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm truncate">{item.name.substring(3)}</div>
-                <div className={`text-xs truncate ${currentView === item.id ? 'text-white/80' : 'text-slate-500'}`}>
-                  {item.description}
-                </div>
+        <nav className="p-3 space-y-1">
+          {navigationItems.map((group) => {
+            const isExpanded = expandedItems.includes(group.id);
+            return (
+              <div key={group.id}>
+                <button
+                  onClick={() => toggleItem(group.id)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{group.name.split(' ')[0]}</span>
+                    <span className="font-bold text-sm">{group.name.substring(3)}</span>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+
+                {isExpanded && (
+                  <div className="ml-8 mt-1 space-y-0.5">
+                    {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setCurrentView(item.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-left text-sm ${
+                          currentView === item.id
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                            : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="font-medium">{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            </button>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="p-4 border-t border-slate-200 mt-auto">
@@ -143,7 +321,7 @@ export function HMSApp() {
         </div>
       </aside>
 
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1 lg:ml-72">
         <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
           <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <button
