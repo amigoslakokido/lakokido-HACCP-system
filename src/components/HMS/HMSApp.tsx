@@ -119,7 +119,6 @@ export function HMSApp() {
       items: [
         { id: 'emergency-fire', name: 'Brannsikkerhet', icon: Flame },
         { id: 'emergency-evacuation', name: 'Evakuering', icon: AlertCircle },
-        { id: 'emergency-drills', name: 'Øvelser', icon: CheckSquare },
       ]
     },
     {
