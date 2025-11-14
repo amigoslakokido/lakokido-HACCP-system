@@ -617,4 +617,176 @@ export const hmsApi = {
       .eq('id', id);
     if (error) throw error;
   },
+
+  // Fire Safety
+  async getFireResponsible() {
+    const { data, error } = await supabase
+      .from('hms_fire_responsible')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateFireResponsible(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_responsible')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getFireEquipment() {
+    const { data, error } = await supabase
+      .from('hms_fire_equipment')
+      .select('*')
+      .order('equipment_type');
+    if (error) throw error;
+    return data;
+  },
+
+  async createFireEquipment(equipment: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_equipment')
+      .insert(equipment)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateFireEquipment(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_equipment')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteFireEquipment(id: string) {
+    const { error } = await supabase
+      .from('hms_fire_equipment')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async getFireInspections() {
+    const { data, error } = await supabase
+      .from('hms_fire_inspections')
+      .select('*')
+      .order('inspection_date', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createFireInspection(inspection: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_inspections')
+      .insert(inspection)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateFireInspection(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_inspections')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteFireInspection(id: string) {
+    const { error } = await supabase
+      .from('hms_fire_inspections')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async getFireDocuments() {
+    const { data, error } = await supabase
+      .from('hms_fire_documents')
+      .select('*')
+      .order('document_date', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createFireDocument(document: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_documents')
+      .insert(document)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteFireDocument(id: string) {
+    const { error } = await supabase
+      .from('hms_fire_documents')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async getFireInstructions() {
+    const { data, error } = await supabase
+      .from('hms_fire_instructions')
+      .select('*')
+      .order('order_number');
+    if (error) throw error;
+    return data;
+  },
+
+  async getFireDeviations() {
+    const { data, error } = await supabase
+      .from('hms_fire_deviations')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createFireDeviation(deviation: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_deviations')
+      .insert(deviation)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateFireDeviation(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_fire_deviations')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteFireDeviation(id: string) {
+    const { error } = await supabase
+      .from('hms_fire_deviations')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
 };

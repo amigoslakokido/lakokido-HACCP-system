@@ -14,6 +14,7 @@ import { Insurance } from './Insurance';
 import { FirstAid } from './FirstAid';
 import { RiskAssessment } from './RiskAssessment';
 import { WorkEnvironment } from './WorkEnvironment';
+import { FireSafety } from './FireSafety';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -249,6 +250,8 @@ export function HMSApp() {
         return <RiskAssessment />;
       case 'health-work-env':
         return <WorkEnvironment />;
+      case 'health-fire':
+        return <FireSafety />;
       case 'reports-generate':
       case 'reports-archive':
         return <Reports />;
