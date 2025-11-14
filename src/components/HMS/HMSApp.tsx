@@ -126,10 +126,7 @@ export function HMSApp() {
       name: '🎓 Opplæring',
       icon: GraduationCap,
       items: [
-        { id: 'training-courses', name: 'Kurs', icon: BookOpen },
-        { id: 'training-certificates', name: 'Sertifikater', icon: BadgeCheck },
-        { id: 'training-plans', name: 'Opplæringsplaner', icon: Calendar },
-        { id: 'training-confirmations', name: 'Bekreftelser', icon: CheckSquare },
+        { id: 'training-courses', name: 'HMS opplæring ledelse', icon: GraduationCap },
       ]
     },
     {
