@@ -117,6 +117,23 @@ export function FireSafety() {
     external_company: ''
   });
 
+  const defaultChecklistItems = [
+    { name: 'Brannslukkere er på plass', status: 'OK' },
+    { name: 'Trykkindikator i grønn sone', status: 'OK' },
+    { name: 'Brannteppe er tilgjengelig', status: 'OK' },
+    { name: 'Rømningsveier er åpne og fri', status: 'OK' },
+    { name: 'Dører er ikke låst med nøkkel', status: 'OK' },
+    { name: 'Nødlys fungerer', status: 'OK' },
+    { name: 'Brannalarm fungerer ved test', status: 'OK' },
+    { name: 'Kjøkkenavtrekk er rent og ikke tett', status: 'OK' },
+    { name: 'Fettfilter er rengjort', status: 'OK' },
+    { name: 'Ingen blottlagte elektriske ledninger', status: 'OK' },
+    { name: 'Steking/olje under oppsyn', status: 'OK' },
+    { name: 'Alle ansatte kjenner branninstruks', status: 'OK' }
+  ];
+
+  const [checklistItems, setChecklistItems] = useState(defaultChecklistItems);
+
   const [documentForm, setDocumentForm] = useState({
     document_type: 'Service-rapport brannslukker',
     document_name: '',
@@ -215,10 +232,15 @@ export function FireSafety() {
 
   const saveInspection = async () => {
     try {
+      const inspectionData = {
+        ...inspectionForm,
+        checklist_items: { items: checklistItems }
+      };
+
       if (editingInspectionId) {
-        await hmsApi.updateFireInspection(editingInspectionId, inspectionForm);
+        await hmsApi.updateFireInspection(editingInspectionId, inspectionData);
       } else {
-        await hmsApi.createFireInspection(inspectionForm);
+        await hmsApi.createFireInspection(inspectionData);
       }
       setIsAddingInspection(false);
       setEditingInspectionId(null);
@@ -230,6 +252,7 @@ export function FireSafety() {
         notes: '',
         external_company: ''
       });
+      setChecklistItems(defaultChecklistItems);
       await loadAllData();
     } catch (error) {
       console.error('Error saving inspection:', error);
@@ -349,7 +372,21 @@ export function FireSafety() {
       notes: insp.notes || '',
       external_company: insp.external_company || ''
     });
+    if (insp.checklist_items && insp.checklist_items.items) {
+      setChecklistItems(insp.checklist_items.items);
+    } else {
+      setChecklistItems(defaultChecklistItems);
+    }
     setIsAddingInspection(true);
+  };
+
+  const updateChecklistItem = (index: number, status: string) => {
+    const newItems = [...checklistItems];
+    newItems[index].status = status;
+    setChecklistItems(newItems);
+
+    const hasNonOK = newItems.some(item => item.status !== 'OK');
+    setInspectionForm({ ...inspectionForm, status: hasNonOK ? 'Ikke OK' : 'OK' });
   };
 
   const startEditingDeviation = (dev: FireDeviation) => {
@@ -422,12 +459,27 @@ export function FireSafety() {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     inspections.slice(0, 5).forEach((insp) => {
-      if (yPos > 270) {
+      if (yPos > 250) {
         doc.addPage();
         yPos = 20;
       }
       doc.text(`${insp.inspection_type} - ${new Date(insp.inspection_date).toLocaleDateString('nb-NO')} - ${insp.status}`, 16, yPos);
       yPos += 6;
+
+      if (insp.checklist_items && insp.checklist_items.items) {
+        doc.setFontSize(8);
+        insp.checklist_items.items.forEach((item: any) => {
+          if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+          }
+          const statusSymbol = item.status === 'OK' ? '✓' : '✗';
+          doc.text(`  ${statusSymbol} ${item.name}`, 18, yPos);
+          yPos += 4;
+        });
+        doc.setFontSize(10);
+        yPos += 4;
+      }
     });
 
     doc.save('brannsikkerhet.pdf');
@@ -910,14 +962,58 @@ export function FireSafety() {
                   </div>
                 )}
 
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h5 className="text-sm font-semibold text-gray-900">Sjekkliste</h5>
+                    <button
+                      type="button"
+                      onClick={() => setChecklistItems(defaultChecklistItems)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Tilbakestill alle til OK
+                    </button>
+                  </div>
+                  <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+                    {checklistItems.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-0">
+                        <span className="text-sm text-gray-700">{item.name}</span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => updateChecklistItem(index, 'OK')}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                              item.status === 'OK'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            }`}
+                          >
+                            ✓ OK
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateChecklistItem(index, 'Ikke OK')}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                              item.status === 'Ikke OK'
+                                ? 'bg-red-500 text-white'
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                            }`}
+                          >
+                            ✗ Ikke OK
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notater</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kommentarer</label>
                   <textarea
                     value={inspectionForm.notes}
                     onChange={(e) => setInspectionForm({ ...inspectionForm, notes: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     rows={3}
-                    placeholder="Beskriv resultatet av kontrollen..."
+                    placeholder="Eventuelle kommentarer eller tilleggsinformasjon..."
                   />
                 </div>
 
@@ -964,7 +1060,26 @@ export function FireSafety() {
                     {insp.external_company && (
                       <p className="text-sm text-gray-600 mb-2">Firma: {insp.external_company}</p>
                     )}
-                    {insp.notes && <p className="text-gray-700">{insp.notes}</p>}
+
+                    {insp.checklist_items && insp.checklist_items.items && (
+                      <div className="mt-3 bg-gray-50 p-3 rounded-lg">
+                        <h6 className="text-xs font-semibold text-gray-700 mb-2">Sjekkliste:</h6>
+                        <div className="grid grid-cols-2 gap-2">
+                          {insp.checklist_items.items.map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs">
+                              <span className="text-gray-600">{item.name}</span>
+                              <span className={`px-2 py-0.5 rounded-full font-medium ${
+                                item.status === 'OK' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {item.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {insp.notes && <p className="text-gray-700 mt-2">{insp.notes}</p>}
                   </div>
                   <div className="flex gap-2">
                     <button
