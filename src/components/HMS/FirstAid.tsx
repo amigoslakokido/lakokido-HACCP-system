@@ -40,6 +40,8 @@ interface Inspection {
 }
 
 export function FirstAid() {
+  console.log('🏥 FirstAid component rendered');
+
   const [activeTab, setActiveTab] = useState<'plan' | 'responsible' | 'equipment' | 'inspections'>('plan');
   const [responsible, setResponsible] = useState<FirstAidResponsible | null>(null);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -89,11 +91,15 @@ export function FirstAid() {
 
   const loadData = async () => {
     setLoading(true);
+    console.log('🏥 Loading First Aid data...');
+
     const [respData, equipData, inspData] = await Promise.all([
       hmsApi.getFirstAidResponsible(),
       hmsApi.getFirstAidEquipment(),
       hmsApi.getFirstAidInspections(),
     ]);
+
+    console.log('📊 First Aid data loaded:', { respData, equipData, inspData });
 
     if (respData.data) {
       setResponsible(respData.data);
