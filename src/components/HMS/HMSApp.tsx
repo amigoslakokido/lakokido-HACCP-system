@@ -17,6 +17,12 @@ import { WorkEnvironment } from './WorkEnvironment';
 import { FireSafety } from './FireSafety';
 import { Evacuation } from './Evacuation';
 import { ManagementTraining } from './ManagementTraining';
+import { FireSafetyTraining } from './FireSafetyTraining';
+import { FirstAidTraining } from './FirstAidTraining';
+import { RoutineTraining } from './RoutineTraining';
+import { SafetyTraining } from './SafetyTraining';
+import { TrainingLog } from './TrainingLog';
+import { NewEmployeeConfirmation } from './NewEmployeeConfirmation';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -127,7 +133,13 @@ export function HMSApp() {
       name: '🎓 Opplæring',
       icon: GraduationCap,
       items: [
-        { id: 'training-courses', name: 'HMS opplæring ledelse', icon: GraduationCap },
+        { id: 'training-management', name: 'HMS opplæring - Ledelse', icon: GraduationCap },
+        { id: 'training-fire', name: 'Brannvernopplæring', icon: Flame },
+        { id: 'training-first-aid', name: 'Førstehjelpsopplæring', icon: Shield },
+        { id: 'training-routine', name: 'Rutineopplæring', icon: CheckSquare },
+        { id: 'training-safety', name: 'Sikkerhetsopplæring', icon: AlertCircle },
+        { id: 'training-log', name: 'Opplæringslogg', icon: FileText },
+        { id: 'training-new-employee', name: 'Bekreftelse nyansatte', icon: Users },
       ]
     },
     {
@@ -237,8 +249,20 @@ export function HMSApp() {
         return <CompanySettings />;
       case 'company-insurance':
         return <Insurance />;
-      case 'training-courses':
+      case 'training-management':
         return <ManagementTraining />;
+      case 'training-fire':
+        return <FireSafetyTraining />;
+      case 'training-first-aid':
+        return <FirstAidTraining />;
+      case 'training-routine':
+        return <RoutineTraining />;
+      case 'training-safety':
+        return <SafetyTraining />;
+      case 'training-log':
+        return <TrainingLog />;
+      case 'training-new-employee':
+        return <NewEmployeeConfirmation />;
       case 'incidents-log':
         return <IncidentLogger />;
       case 'health-firstaid':
