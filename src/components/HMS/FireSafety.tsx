@@ -256,12 +256,12 @@ export function FireSafety() {
       await loadAllData();
     } catch (error) {
       console.error('Error saving inspection:', error);
-      alert('Kunne ikke lagre kontroll');
+      alert('Kunne ikke lagre sjekkliste');
     }
   };
 
   const deleteInspection = async (id: string) => {
-    if (!confirm('Er du sikker på at du vil slette denne kontrollen?')) return;
+    if (!confirm('Er du sikker på at du vil slette denne sjekklisten?')) return;
     try {
       await hmsApi.deleteFireInspection(id);
       await loadAllData();
@@ -453,7 +453,7 @@ export function FireSafety() {
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Siste kontroller', 14, yPos);
+    doc.text('Siste sjekklister', 14, yPos);
     yPos += 8;
 
     doc.setFontSize(10);
@@ -533,7 +533,7 @@ export function FireSafety() {
         {[
           { id: 'overview', label: 'Oversikt' },
           { id: 'equipment', label: 'Utstyr' },
-          { id: 'inspections', label: 'Kontroller' },
+          { id: 'inspections', label: 'Sjekkliste' },
           { id: 'documents', label: 'Dokumenter' },
           { id: 'instructions', label: 'Branninstruks' },
           { id: 'deviations', label: 'Avvik' }
@@ -674,7 +674,7 @@ export function FireSafety() {
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Siste kontroller</h3>
+            <h3 className="text-lg font-semibold mb-4">Siste sjekklister</h3>
             <div className="space-y-3">
               {inspections.slice(0, 5).map((insp) => (
                 <div key={insp.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
@@ -874,20 +874,20 @@ export function FireSafety() {
       {activeTab === 'inspections' && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Brannkontroller</h3>
+            <h3 className="text-lg font-semibold">Sjekklister</h3>
             <button
               onClick={() => setIsAddingInspection(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               <Plus className="w-4 h-4" />
-              Ny kontroll
+              Ny sjekkliste
             </button>
           </div>
 
           {isAddingInspection && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">{editingInspectionId ? 'Rediger kontroll' : 'Ny kontroll'}</h4>
+                <h4 className="font-semibold">{editingInspectionId ? 'Rediger sjekkliste' : 'Ny sjekkliste'}</h4>
                 <button
                   onClick={() => {
                     setIsAddingInspection(false);
@@ -902,7 +902,7 @@ export function FireSafety() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Type kontroll *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type sjekkliste *</label>
                     <select
                       value={inspectionForm.inspection_type}
                       onChange={(e) => setInspectionForm({ ...inspectionForm, inspection_type: e.target.value })}
@@ -957,7 +957,7 @@ export function FireSafety() {
                       value={inspectionForm.external_company}
                       onChange={(e) => setInspectionForm({ ...inspectionForm, external_company: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      placeholder="Navn på firma som utførte kontrollen"
+                      placeholder="Navn på firma som utførte sjekklisten"
                     />
                   </div>
                 )}
