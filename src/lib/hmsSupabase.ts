@@ -591,9 +591,28 @@ export const hmsApi = {
     return data;
   },
 
+  async updateWorkEnvironmentDeviation(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_deviations')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
   async deleteWorkEnvironmentDeviation(id: string) {
     const { error } = await supabase
       .from('hms_work_environment_deviations')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async deleteWorkEnvironmentAssessment(id: string) {
+    const { error } = await supabase
+      .from('hms_work_environment_assessments')
       .delete()
       .eq('id', id);
     if (error) throw error;

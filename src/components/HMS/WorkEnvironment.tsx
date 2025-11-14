@@ -99,11 +99,14 @@ export function WorkEnvironment() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'assessment' | 'deviations'>('overview');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [isEditingAssessment, setIsEditingAssessment] = useState(false);
 
   const [newAssessmentForm, setNewAssessmentForm] = useState({
     assessed_by: '',
     department: '',
-    notes: ''
+    notes: '',
+    action_plan: '',
+    next_review_date: ''
   });
 
   const [newDeviationForm, setNewDeviationForm] = useState({
@@ -117,6 +120,7 @@ export function WorkEnvironment() {
   });
 
   const [showDeviationForm, setShowDeviationForm] = useState(false);
+  const [editingDeviationId, setEditingDeviationId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -187,13 +191,58 @@ export function WorkEnvironment() {
       await hmsApi.createWorkEnvironmentItemsBulk(allItems);
 
       setIsCreatingNew(false);
-      setNewAssessmentForm({ assessed_by: '', department: '', notes: '' });
+      setNewAssessmentForm({ assessed_by: '', department: '', notes: '', action_plan: '', next_review_date: '' });
       await loadData();
       setSelectedAssessment(assessment);
       setActiveTab('assessment');
     } catch (error) {
       console.error('Error creating assessment:', error);
       alert('Kunne ikke opprette vurdering');
+    }
+  };
+
+  const startEditingAssessment = () => {
+    if (!selectedAssessment) return;
+    setNewAssessmentForm({
+      assessed_by: selectedAssessment.assessed_by,
+      department: selectedAssessment.department || '',
+      notes: selectedAssessment.notes || '',
+      action_plan: selectedAssessment.action_plan || '',
+      next_review_date: selectedAssessment.next_review_date || ''
+    });
+    setIsEditingAssessment(true);
+  };
+
+  const saveAssessmentEdit = async () => {
+    if (!selectedAssessment) return;
+
+    try {
+      await hmsApi.updateWorkEnvironmentAssessment(selectedAssessment.id, {
+        assessed_by: newAssessmentForm.assessed_by,
+        department: newAssessmentForm.department || null,
+        notes: newAssessmentForm.notes || null,
+        action_plan: newAssessmentForm.action_plan || null,
+        next_review_date: newAssessmentForm.next_review_date || null
+      });
+
+      setIsEditingAssessment(false);
+      setNewAssessmentForm({ assessed_by: '', department: '', notes: '', action_plan: '', next_review_date: '' });
+      await loadData();
+    } catch (error) {
+      console.error('Error updating assessment:', error);
+      alert('Kunne ikke oppdatere vurdering');
+    }
+  };
+
+  const deleteAssessment = async (id: string) => {
+    if (!confirm('Er du sikker på at du vil slette denne kartleggingen? Dette vil også slette alle tilknyttede elementer og avvik.')) return;
+    try {
+      await hmsApi.deleteWorkEnvironmentAssessment(id);
+      setSelectedAssessment(null);
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting assessment:', error);
+      alert('Kunne ikke slette kartlegging');
     }
   };
 
@@ -236,12 +285,17 @@ export function WorkEnvironment() {
     }
 
     try {
-      await hmsApi.createWorkEnvironmentDeviation({
-        assessment_id: selectedAssessment.id,
-        ...newDeviationForm
-      });
+      if (editingDeviationId) {
+        await hmsApi.updateWorkEnvironmentDeviation(editingDeviationId, newDeviationForm);
+      } else {
+        await hmsApi.createWorkEnvironmentDeviation({
+          assessment_id: selectedAssessment.id,
+          ...newDeviationForm
+        });
+      }
 
       setShowDeviationForm(false);
+      setEditingDeviationId(null);
       setNewDeviationForm({
         deviation_type: '',
         description: '',
@@ -256,9 +310,23 @@ export function WorkEnvironment() {
         await loadAssessmentDetails(selectedAssessment.id);
       }
     } catch (error) {
-      console.error('Error creating deviation:', error);
-      alert('Kunne ikke registrere avvik');
+      console.error('Error saving deviation:', error);
+      alert('Kunne ikke lagre avvik');
     }
+  };
+
+  const startEditingDeviation = (deviation: Deviation) => {
+    setEditingDeviationId(deviation.id);
+    setNewDeviationForm({
+      deviation_type: deviation.deviation_type,
+      description: deviation.description,
+      severity: deviation.severity || 'Middels',
+      corrective_action: deviation.corrective_action || '',
+      responsible_person: deviation.responsible_person || '',
+      deadline: deviation.deadline || '',
+      status: deviation.status
+    });
+    setShowDeviationForm(true);
   };
 
   const deleteDeviation = async (id: string) => {
@@ -412,13 +480,29 @@ export function WorkEnvironment() {
         </div>
         <div className="flex gap-2">
           {selectedAssessment && (
-            <button
-              onClick={generatePDF}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              <Download className="w-4 h-4" />
-              Last ned PDF
-            </button>
+            <>
+              <button
+                onClick={generatePDF}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                <Download className="w-4 h-4" />
+                Last ned PDF
+              </button>
+              <button
+                onClick={startEditingAssessment}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+              >
+                <Edit2 className="w-4 h-4" />
+                Rediger
+              </button>
+              <button
+                onClick={() => deleteAssessment(selectedAssessment.id)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                Slett
+              </button>
+            </>
           )}
           <button
             onClick={() => setIsCreatingNew(true)}
@@ -493,6 +577,100 @@ export function WorkEnvironment() {
               >
                 <Save className="w-4 h-4" />
                 Opprett kartlegging
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEditingAssessment && selectedAssessment && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Rediger arbeidsmiljøkartlegging</h3>
+            <button onClick={() => setIsEditingAssessment(false)} className="text-gray-500 hover:text-gray-700">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Utført av *
+              </label>
+              <input
+                type="text"
+                value={newAssessmentForm.assessed_by}
+                onChange={(e) => setNewAssessmentForm({ ...newAssessmentForm, assessed_by: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Navn på person som utfører kartleggingen"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Avdeling
+              </label>
+              <input
+                type="text"
+                value={newAssessmentForm.department}
+                onChange={(e) => setNewAssessmentForm({ ...newAssessmentForm, department: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="F.eks. Kjøkken, Restaurant, Bar"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Innledende notater
+              </label>
+              <textarea
+                value={newAssessmentForm.notes}
+                onChange={(e) => setNewAssessmentForm({ ...newAssessmentForm, notes: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                placeholder="Beskriv formålet med kartleggingen..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Handlingsplan
+              </label>
+              <textarea
+                value={newAssessmentForm.action_plan}
+                onChange={(e) => setNewAssessmentForm({ ...newAssessmentForm, action_plan: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                rows={4}
+                placeholder="Beskriv tiltak og oppfølgingsplan..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Neste gjennomgangsdato
+              </label>
+              <input
+                type="date"
+                value={newAssessmentForm.next_review_date}
+                onChange={(e) => setNewAssessmentForm({ ...newAssessmentForm, next_review_date: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsEditingAssessment(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={saveAssessmentEdit}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <Save className="w-4 h-4" />
+                Lagre endringer
               </button>
             </div>
           </div>
@@ -668,8 +846,14 @@ export function WorkEnvironment() {
           {showDeviationForm && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="font-semibold">Nytt avvik</h4>
-                <button onClick={() => setShowDeviationForm(false)} className="text-gray-500 hover:text-gray-700">
+                <h4 className="font-semibold">{editingDeviationId ? 'Rediger avvik' : 'Nytt avvik'}</h4>
+                <button
+                  onClick={() => {
+                    setShowDeviationForm(false);
+                    setEditingDeviationId(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -726,7 +910,7 @@ export function WorkEnvironment() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ansvarlig person</label>
                     <input
@@ -746,6 +930,19 @@ export function WorkEnvironment() {
                       onChange={(e) => setNewDeviationForm({ ...newDeviationForm, deadline: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={newDeviationForm.status}
+                      onChange={(e) => setNewDeviationForm({ ...newDeviationForm, status: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Åpen">Åpen</option>
+                      <option value="Under arbeid">Under arbeid</option>
+                      <option value="Ferdig">Ferdig</option>
+                    </select>
                   </div>
                 </div>
 
@@ -797,12 +994,20 @@ export function WorkEnvironment() {
                       </div>
                       <p className="text-gray-700 mb-3">{deviation.description}</p>
                     </div>
-                    <button
-                      onClick={() => deleteDeviation(deviation.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => startEditingDeviation(deviation)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteDeviation(deviation.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   {deviation.corrective_action && (
