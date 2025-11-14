@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { HMSDashboard } from './HMSDashboard';
-import { IncidentLogger } from './IncidentLogger';
+import { IncidentsMain } from './IncidentsMain';
 import { Reports } from './Reports';
 import { Training } from './Training';
 import { Maintenance } from './Maintenance';
@@ -135,10 +135,7 @@ export function HMSApp() {
       name: '⚠️ Hendelser',
       icon: AlertTriangle,
       items: [
-        { id: 'incidents-log', name: 'Hendelseslogg', icon: AlertTriangle },
-        { id: 'incidents-deviations', name: 'Avvik', icon: AlertCircle },
-        { id: 'incidents-actions', name: 'Tiltak', icon: CheckSquare },
-        { id: 'incidents-statistics', name: 'Statistikk', icon: TrendingUp },
+        { id: 'incidents-main', name: 'Hendelser', icon: AlertTriangle },
       ]
     },
     {
@@ -239,8 +236,8 @@ export function HMSApp() {
         return <Insurance />;
       case 'hms-training':
         return <HMSTraining />;
-      case 'incidents-log':
-        return <IncidentLogger />;
+      case 'incidents-main':
+        return <IncidentsMain />;
       case 'health-firstaid':
         return <FirstAid />;
       case 'health-risk':
