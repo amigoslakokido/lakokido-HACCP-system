@@ -117,7 +117,6 @@ export function HMSApp() {
         { id: 'emergency-evacuation', name: 'Evakuering', icon: AlertCircle },
         { id: 'emergency-plan', name: 'Beredskapsplan', icon: FileCheck },
         { id: 'emergency-drills', name: 'Øvelser', icon: CheckSquare },
-        { id: 'emergency-firstaid', name: 'Førstehjelp', icon: Heart },
       ]
     },
     {
@@ -242,7 +241,7 @@ export function HMSApp() {
         return <Training />;
       case 'incidents-log':
         return <IncidentLogger />;
-      case 'emergency-firstaid':
+      case 'health-firstaid':
         return <FirstAid />;
       case 'reports-generate':
       case 'reports-archive':
