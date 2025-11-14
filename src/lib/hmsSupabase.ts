@@ -368,4 +368,106 @@ export const hmsApi = {
       .eq('id', id);
     return { data, error };
   },
+
+  // First Aid Responsible Management
+  async getFirstAidResponsible() {
+    const { data, error } = await supabase
+      .from('hms_first_aid_responsible')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { data, error };
+  },
+
+  async createFirstAidResponsible(responsible: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_responsible')
+      .insert(responsible)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updateFirstAidResponsible(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_responsible')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  // First Aid Equipment Management
+  async getFirstAidEquipment() {
+    const { data, error } = await supabase
+      .from('hms_first_aid_equipment')
+      .select('*')
+      .order('equipment_name', { ascending: true });
+    return { data, error };
+  },
+
+  async createFirstAidEquipment(equipment: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_equipment')
+      .insert(equipment)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updateFirstAidEquipment(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_equipment')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async deleteFirstAidEquipment(id: string) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_equipment')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
+
+  // First Aid Inspections Management
+  async getFirstAidInspections() {
+    const { data, error } = await supabase
+      .from('hms_first_aid_inspections')
+      .select('*')
+      .order('inspection_date', { ascending: false });
+    return { data, error };
+  },
+
+  async createFirstAidInspection(inspection: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_inspections')
+      .insert(inspection)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async updateFirstAidInspection(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_inspections')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async deleteFirstAidInspection(id: string) {
+    const { data, error } = await supabase
+      .from('hms_first_aid_inspections')
+      .delete()
+      .eq('id', id);
+    return { data, error };
+  },
 };
