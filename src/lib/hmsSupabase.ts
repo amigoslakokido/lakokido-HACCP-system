@@ -470,4 +470,43 @@ export const hmsApi = {
       .eq('id', id);
     return { data, error };
   },
+
+  // Risk Assessments
+  async getRiskAssessments() {
+    const { data, error } = await supabase
+      .from('hms_risk_assessments')
+      .select('*')
+      .order('risk_score', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createRiskAssessment(assessment: any) {
+    const { data, error } = await supabase
+      .from('hms_risk_assessments')
+      .insert(assessment)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateRiskAssessment(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_risk_assessments')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteRiskAssessment(id: string) {
+    const { error } = await supabase
+      .from('hms_risk_assessments')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
 };

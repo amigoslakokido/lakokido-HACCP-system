@@ -12,6 +12,7 @@ import { SafetyRepresentative } from './SafetyRepresentative';
 import { PersonalList } from './PersonalList';
 import { Insurance } from './Insurance';
 import { FirstAid } from './FirstAid';
+import { RiskAssessment } from './RiskAssessment';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -243,6 +244,8 @@ export function HMSApp() {
         return <IncidentLogger />;
       case 'health-firstaid':
         return <FirstAid />;
+      case 'health-risk':
+        return <RiskAssessment />;
       case 'reports-generate':
       case 'reports-archive':
         return <Reports />;
