@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Plus, Edit2, Trash2, Save, X, User, Mail, Phone, Building2, Calendar, FileText, Package, CheckCircle, AlertCircle, Download, Upload, Image as ImageIcon } from 'lucide-react';
+import { Heart, Plus, Edit2, Trash2, Save, X, User, Mail, Phone, Building2, Calendar, FileText, Package, CheckCircle, AlertCircle, Download, Image as ImageIcon } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
 import jsPDF from 'jspdf';
 
@@ -223,7 +223,7 @@ export function FirstAid() {
     yPos += 8;
 
     doc.setFontSize(10);
-    inspections.slice(0, 10).forEach((insp, index) => {
+    inspections.slice(0, 10).forEach((insp) => {
       if (yPos > 270) {
         doc.addPage();
         yPos = 20;
