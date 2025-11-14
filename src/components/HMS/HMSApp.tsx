@@ -250,7 +250,7 @@ export function HMSApp() {
         return <RiskAssessment />;
       case 'health-work-env':
         return <WorkEnvironment />;
-      case 'health-fire':
+      case 'emergency-fire':
         return <FireSafety />;
       case 'reports-generate':
       case 'reports-archive':
