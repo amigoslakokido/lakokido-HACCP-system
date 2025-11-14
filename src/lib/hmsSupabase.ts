@@ -509,4 +509,93 @@ export const hmsApi = {
       .eq('id', id);
     if (error) throw error;
   },
+
+  // Work Environment
+  async getWorkEnvironmentAssessments() {
+    const { data, error } = await supabase
+      .from('hms_work_environment_assessments')
+      .select('*')
+      .order('assessment_date', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createWorkEnvironmentAssessment(assessment: any) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_assessments')
+      .insert(assessment)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateWorkEnvironmentAssessment(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_assessments')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getWorkEnvironmentItems(assessmentId: string) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_items')
+      .select('*')
+      .eq('assessment_id', assessmentId)
+      .order('category');
+    if (error) throw error;
+    return data;
+  },
+
+  async createWorkEnvironmentItemsBulk(items: any[]) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_items')
+      .insert(items)
+      .select();
+    if (error) throw error;
+    return data;
+  },
+
+  async updateWorkEnvironmentItem(id: string, updates: any) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_items')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async getWorkEnvironmentDeviations(assessmentId: string) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_deviations')
+      .select('*')
+      .eq('assessment_id', assessmentId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+
+  async createWorkEnvironmentDeviation(deviation: any) {
+    const { data, error } = await supabase
+      .from('hms_work_environment_deviations')
+      .insert(deviation)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
+
+  async deleteWorkEnvironmentDeviation(id: string) {
+    const { error } = await supabase
+      .from('hms_work_environment_deviations')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+  },
 };
