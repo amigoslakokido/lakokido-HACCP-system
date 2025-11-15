@@ -155,10 +155,7 @@ export function HMSApp() {
       name: '🌍 Miljø',
       icon: Leaf,
       items: [
-        { id: 'environment-policy', name: 'Miljøpolicy', icon: FileCheck },
-        { id: 'environment-waste', name: 'Avfallshåndtering', icon: Package },
-        { id: 'environment-partners', name: 'Miljøpartnere', icon: Users },
-        { id: 'environment-sustainability', name: 'Bærekraft', icon: Globe },
+        { id: 'environment-main', name: 'Miljøstyring', icon: Leaf },
       ]
     },
     {
