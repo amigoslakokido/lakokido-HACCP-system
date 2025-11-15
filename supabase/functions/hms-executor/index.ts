@@ -43,6 +43,15 @@ Deno.serve(async (req: Request) => {
       case 'create-training-log':
         result = await createTrainingLog(supabase, body);
         break;
+      case 'create-waste-plan':
+        result = await createWastePlan(supabase, body);
+        break;
+      case 'create-environmental-goal':
+        result = await createEnvironmentalGoal(supabase, body);
+        break;
+      case 'create-grease-trap':
+        result = await createGreaseTrap(supabase, body);
+        break;
       default:
         throw new Error('Ukjent handling');
     }
@@ -165,6 +174,63 @@ async function createTrainingLog(supabase: any, data: any) {
       training_date: data.training_date || new Date().toISOString().split('T')[0],
       completion_date: data.completion_date || new Date().toISOString().split('T')[0],
       status: 'completed',
+      notes: data.notes || ''
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return result;
+}
+
+async function createWastePlan(supabase: any, data: any) {
+  const { data: result, error } = await supabase
+    .from('hms_environment_waste')
+    .insert({
+      waste_type: data.waste_type || 'Generelt avfall',
+      description: data.description || 'Beskriv avfallstypen',
+      collection_frequency: data.collection_frequency || 'Ukentlig',
+      supplier: data.supplier || 'Ikke angitt',
+      disposal_method: data.disposal_method || 'Henteordning',
+      notes: data.notes || ''
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return result;
+}
+
+async function createEnvironmentalGoal(supabase: any, data: any) {
+  const { data: result, error } = await supabase
+    .from('hms_environment_goals')
+    .insert({
+      goal_category: data.goal_category || 'Avfall',
+      goal_description: data.goal_description || 'Beskriv miljømålet',
+      target_value: data.target_value || 'Målverdi må angis',
+      current_value: data.current_value || 'Nåværende verdi',
+      target_date: data.target_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'Pågår',
+      responsible_person: data.responsible_person || 'Ikke tildelt',
+      notes: data.notes || ''
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return result;
+}
+
+async function createGreaseTrap(supabase: any, data: any) {
+  const { data: result, error } = await supabase
+    .from('hms_environment_grease_trap')
+    .insert({
+      location: data.location || 'Ikke angitt',
+      capacity: data.capacity || 'Ikke angitt',
+      supplier: data.supplier || 'NORVA',
+      last_service_date: data.last_service_date || new Date().toISOString().split('T')[0],
+      next_service_date: data.next_service_date || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      service_interval_months: data.service_interval_months || 6,
       notes: data.notes || ''
     })
     .select()

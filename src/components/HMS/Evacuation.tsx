@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { AssistantPanel } from './AssistantPanel';
 
 interface EvacuationPlan {
   id: string;

@@ -44,10 +44,34 @@ export function EnvironmentMain() {
     }
   };
 
+  const getExecuteActions = (section: string) => {
+    switch (section) {
+      case 'waste':
+        return [
+          { action: 'create-waste-plan', label: 'Opprett avfallsplan' }
+        ];
+      case 'goals':
+        return [
+          { action: 'create-environmental-goal', label: 'Opprett miljømål' }
+        ];
+      case 'grease-trap':
+        return [
+          { action: 'create-grease-trap', label: 'Opprett fettutskiller' }
+        ];
+      default:
+        return [];
+    }
+  };
+
   if (selectedSection) {
     return (
       <div className="space-y-4">
-        <AssistantPanel seksjon="miljo" data={{}} />
+        <AssistantPanel
+          seksjon="miljo"
+          data={{}}
+          executeActions={getExecuteActions(selectedSection)}
+          onExecuteSuccess={() => window.location.reload()}
+        />
         <button onClick={() => setSelectedSection(null)} className="text-green-600 hover:text-green-700 flex items-center gap-2 text-sm font-medium">
           <ArrowLeft className="w-4 h-4" /> Tilbake til oversikt
         </button>

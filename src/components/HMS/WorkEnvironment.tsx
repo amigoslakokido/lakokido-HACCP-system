@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, Download, FileText, Calendar, User } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
 import { PDFGenerator } from '../../utils/pdfGenerator';
+import { AssistantPanel } from './AssistantPanel';
 
 interface Assessment {
   id: string;
@@ -503,6 +504,13 @@ export function WorkEnvironment() {
 
   return (
     <div className="space-y-6">
+      <AssistantPanel
+        seksjon="arbeidsmiljo"
+        data={{
+          verneombud: selectedAssessment?.assessed_by,
+          arbeidsmiljøundersokelse: assessments.length > 0
+        }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
