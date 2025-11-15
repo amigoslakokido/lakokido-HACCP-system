@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Plus, Edit2, Trash2, Save, X, AlertCircle, CheckCircle, Download, FileText, Calendar, User } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
-import jsPDF from 'jspdf';
+import { PDFGenerator } from '../../utils/pdfGenerator';
 
 interface Assessment {
   id: string;
@@ -121,6 +121,9 @@ export function WorkEnvironment() {
 
   const [showDeviationForm, setShowDeviationForm] = useState(false);
   const [editingDeviationId, setEditingDeviationId] = useState<string | null>(null);
+  const [showNewItemForm, setShowNewItemForm] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [newItemName, setNewItemName] = useState('');
 
   useEffect(() => {
     loadData();
@@ -341,107 +344,139 @@ export function WorkEnvironment() {
     }
   };
 
-  const generatePDF = () => {
+  const addNewItem = async () => {
+    if (!selectedAssessment || !selectedCategory || !newItemName) {
+      alert('Vennligst fyll inn alle felt');
+      return;
+    }
+
+    try {
+      await hmsApi.createWorkEnvironmentItem({
+        assessment_id: selectedAssessment.id,
+        category: selectedCategory,
+        item_name: newItemName,
+        status: 'OK',
+        priority: 'Lav'
+      });
+
+      setShowNewItemForm(false);
+      setSelectedCategory('');
+      setNewItemName('');
+
+      if (selectedAssessment) {
+        await loadAssessmentDetails(selectedAssessment.id);
+      }
+    } catch (error) {
+      console.error('Error adding item:', error);
+      alert('Kunne ikke legge til element');
+    }
+  };
+
+  const generatePDF = async () => {
     if (!selectedAssessment) return;
 
-    const doc = new jsPDF();
-    let yPos = 20;
+    try {
+      const companyData = await hmsApi.getCompanySettings();
+      const company = companyData && companyData.length > 0 ? companyData[0] : null;
 
-    doc.setFontSize(18);
-    doc.text('Arbeidsmiljøkartlegging', 14, yPos);
-    yPos += 10;
+      const pdf = new PDFGenerator(company ? {
+        company_name: company.company_name,
+        org_number: company.org_number || undefined,
+        phone: company.phone || undefined,
+        email: company.email || undefined,
+        address: company.address || undefined
+      } : undefined);
 
-    doc.setFontSize(11);
-    doc.text(`Dato: ${new Date(selectedAssessment.assessment_date).toLocaleDateString('nb-NO')}`, 14, yPos);
-    yPos += 6;
-    doc.text(`Utført av: ${selectedAssessment.assessed_by}`, 14, yPos);
-    yPos += 6;
-    if (selectedAssessment.department) {
-      doc.text(`Avdeling: ${selectedAssessment.department}`, 14, yPos);
-      yPos += 6;
-    }
-    doc.text(`Status: ${selectedAssessment.overall_status}`, 14, yPos);
-    yPos += 15;
+      const subtitle = `${new Date(selectedAssessment.assessment_date).toLocaleDateString('nb-NO')} • ${selectedAssessment.assessed_by}`;
+      pdf.addHeader('Arbeidsmiljøkartlegging', subtitle);
 
-    categories.forEach(category => {
-      const categoryItems = items.filter(i => i.category === category);
-      if (categoryItems.length === 0) return;
+      pdf.addKeyValue('Dato', new Date(selectedAssessment.assessment_date).toLocaleDateString('nb-NO'));
+      pdf.addKeyValue('Utført av', selectedAssessment.assessed_by);
+      if (selectedAssessment.department) {
+        pdf.addKeyValue('Avdeling', selectedAssessment.department);
+      }
+      pdf.addKeyValue('Status', selectedAssessment.overall_status);
 
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
+      if (selectedAssessment.notes) {
+        pdf.addSpace(10);
+        pdf.addInfoBox('Notater', selectedAssessment.notes, 'blue');
       }
 
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(category, 14, yPos);
-      yPos += 7;
+      pdf.addSpace(10);
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      categories.forEach(category => {
+        const categoryItems = items.filter(i => i.category === category);
+        if (categoryItems.length === 0) return;
 
-      categoryItems.forEach(item => {
-        if (yPos > 270) {
-          doc.addPage();
-          yPos = 20;
-        }
+        pdf.addSection(category);
 
-        const statusColor = item.status === 'OK' ? [0, 150, 0] : [255, 140, 0];
-        doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-        doc.text(`${item.status === 'OK' ? '✓' : '⚠'} ${item.item_name}`, 16, yPos);
-        doc.setTextColor(0, 0, 0);
-        yPos += 5;
+        const needsImprovement = categoryItems.filter(i => i.status === 'Trenger forbedring').length;
+        const okCount = categoryItems.filter(i => i.status === 'OK').length;
 
-        if (item.notes) {
-          doc.setFontSize(9);
-          doc.text(`  ${item.notes}`, 18, yPos);
-          yPos += 5;
-          doc.setFontSize(10);
-        }
+        pdf.addText(`✓ OK: ${okCount} | ⚠ Trenger forbedring: ${needsImprovement}`, 10);
+        pdf.addSpace(5);
+
+        categoryItems.forEach(item => {
+          const color: [number, number, number] = item.status === 'OK' ? [0, 150, 0] : [255, 140, 0];
+          pdf.addBulletPoint(`${item.status === 'OK' ? '✓' : '⚠'} ${item.item_name}`, color);
+
+          if (item.notes) {
+            pdf.addText(item.notes, 9, 20);
+          }
+        });
+
+        pdf.addSpace(5);
       });
 
-      yPos += 5;
-    });
+      if (deviations.length > 0) {
+        pdf.addSection('Avvik og tiltak');
 
-    if (deviations.length > 0) {
-      if (yPos > 230) {
-        doc.addPage();
-        yPos = 20;
+        deviations.forEach((dev, index) => {
+          pdf.addSubsection(`${index + 1}. ${dev.deviation_type}`);
+
+          pdf.addKeyValue('Beskrivelse', dev.description);
+
+          if (dev.severity) {
+            pdf.addKeyValue('Alvorlighetsgrad', dev.severity);
+          }
+
+          if (dev.corrective_action) {
+            pdf.addKeyValue('Korrigerende tiltak', dev.corrective_action);
+          }
+
+          if (dev.responsible_person) {
+            pdf.addKeyValue('Ansvarlig', dev.responsible_person);
+          }
+
+          if (dev.deadline) {
+            pdf.addKeyValue('Frist', new Date(dev.deadline).toLocaleDateString('nb-NO'));
+          }
+
+          pdf.addKeyValue('Status', dev.status);
+
+          pdf.addSpace(10);
+        });
       }
 
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Avvik og tiltak', 14, yPos);
-      yPos += 10;
+      if (selectedAssessment.action_plan) {
+        pdf.addSection('Handlingsplan');
+        pdf.addText(selectedAssessment.action_plan);
+        pdf.addSpace(5);
+      }
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      if (selectedAssessment.next_review_date) {
+        pdf.addInfoBox(
+          'Neste gjennomgang',
+          `Planlagt dato: ${new Date(selectedAssessment.next_review_date).toLocaleDateString('nb-NO')}`,
+          'yellow'
+        );
+      }
 
-      deviations.forEach((dev, index) => {
-        if (yPos > 250) {
-          doc.addPage();
-          yPos = 20;
-        }
-
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${index + 1}. ${dev.deviation_type}`, 14, yPos);
-        yPos += 6;
-
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Beskrivelse: ${dev.description}`, 16, yPos);
-        yPos += 5;
-
-        if (dev.corrective_action) {
-          doc.text(`Tiltak: ${dev.corrective_action}`, 16, yPos);
-          yPos += 5;
-        }
-
-        doc.text(`Status: ${dev.status}`, 16, yPos);
-        yPos += 8;
-      });
+      pdf.save(`arbeidsmiljo_${new Date(selectedAssessment.assessment_date).toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Kunne ikke generere PDF');
     }
-
-    doc.save(`arbeidsmiljo_${new Date(selectedAssessment.assessment_date).toISOString().split('T')[0]}.pdf`);
   };
 
   const getStatusColor = (status: string) => {
@@ -769,6 +804,70 @@ export function WorkEnvironment() {
 
       {activeTab === 'assessment' && selectedAssessment && (
         <div className="space-y-6">
+          {showNewItemForm && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Legg til nytt element</h3>
+                <button onClick={() => setShowNewItemForm(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Velg kategori</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Elementnavn *</label>
+                  <input
+                    type="text"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="F.eks. Støynivå, Ventilasjon"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowNewItemForm(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    onClick={addNewItem}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <Save className="w-4 h-4" />
+                    Legg til
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowNewItemForm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <Plus className="w-4 h-4" />
+              Legg til nytt element
+            </button>
+          </div>
+
           {categories.map(category => {
             const categoryItems = items.filter(i => i.category === category);
             const needsImprovement = categoryItems.filter(i => i.status === 'Trenger forbedring').length;
