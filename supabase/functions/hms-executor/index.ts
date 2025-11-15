@@ -81,13 +81,13 @@ async function createFireEquipment(supabase: any, data: any) {
   const { data: result, error } = await supabase
     .from('hms_fire_equipment')
     .insert({
-      equipment_type: data.equipment_type || 'brannslokker',
+      equipment_type: data.equipment_type || 'Brannslukker',
       location: data.location || 'Ikke angitt',
       description: data.description || '',
       installation_date: data.installation_date || new Date().toISOString().split('T')[0],
       last_service_date: data.last_service_date || new Date().toISOString().split('T')[0],
       next_service_date: data.next_service_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'ok',
+      status: 'OK',
       notes: data.notes || ''
     })
     .select()
