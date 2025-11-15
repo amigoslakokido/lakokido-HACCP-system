@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Leaf, Droplet, FileText, Recycle, Sparkles, Car, Target, ArrowLeft } from 'lucide-react';
+import { AssistantPanel } from './AssistantPanel';
 import { FryingOilManagement } from './Environment/FryingOilManagement';
 import { GreaseTrapManagement } from './Environment/GreaseTrapManagement';
 import { WasteManagement } from './Environment/WasteManagement';
@@ -46,6 +47,7 @@ export function EnvironmentMain() {
   if (selectedSection) {
     return (
       <div className="space-y-4">
+        <AssistantPanel seksjon="miljo" data={{}} />
         <button onClick={() => setSelectedSection(null)} className="text-green-600 hover:text-green-700 flex items-center gap-2 text-sm font-medium">
           <ArrowLeft className="w-4 h-4" /> Tilbake til oversikt
         </button>

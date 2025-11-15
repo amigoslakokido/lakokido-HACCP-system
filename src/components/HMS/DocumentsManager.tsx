@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { FileStack, Upload, Download, Trash2, ChevronDown, ChevronRight, File, FolderOpen } from 'lucide-react';
+import { AssistantPanel } from './AssistantPanel';
 
 interface Document {
   id: string;
@@ -149,6 +150,15 @@ export function DocumentsManager() {
 
   return (
     <div className="space-y-6">
+      <AssistantPanel
+        seksjon="dokumenter"
+        data={{
+          hmsHaandbok: documents.filter(d => d.category === 'hms_handbook').length > 0,
+          prosedyrer: documents.filter(d => d.category === 'procedures'),
+          tegninger: documents.filter(d => d.category === 'drawings').length > 0,
+          kontrakter: documents.filter(d => d.category === 'contracts').length > 0
+        }}
+      />
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, Plus, Edit2, Trash2, Save, X, User, Mail, Phone, Building2, Calendar, FileText, Package, CheckCircle, AlertCircle, Download, Image as ImageIcon } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
 import jsPDF from 'jspdf';
+import { AssistantPanel } from './AssistantPanel';
 
 interface FirstAidResponsible {
   id?: string;
@@ -258,6 +259,14 @@ export function FirstAid() {
 
   return (
     <div className="space-y-6">
+      <AssistantPanel
+        seksjon="forstehjelp"
+        data={{
+          utstyr: equipment,
+          opplartePersoner: trainedPersonnel.length,
+          utlopsdato: trainedPersonnel.length > 0 ? trainedPersonnel[0].certificate_valid_until : null
+        }}
+      />
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

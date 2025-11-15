@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AlertTriangle, Plus, Edit2, Trash2, Save, X, Calendar, User, FileText, Image as ImageIcon, Download } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
 import jsPDF from 'jspdf';
+import { AssistantPanel } from './AssistantPanel';
 
 interface RiskAssessment {
   id: string;
@@ -203,6 +204,14 @@ export function RiskAssessment() {
 
   return (
     <div className="space-y-6">
+      <AssistantPanel
+        seksjon="risikoanalyse"
+        data={{
+          risikoområder: assessments,
+          høyRisiko: assessments.filter(a => a.risk_level === 'høy'),
+          sistOppdatert: assessments.length > 0 ? assessments[0].assessment_date : null
+        }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">

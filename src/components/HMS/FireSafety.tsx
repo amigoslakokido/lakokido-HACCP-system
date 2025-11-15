@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Flame, Plus, Edit2, Trash2, Save, X, Download, AlertTriangle, CheckCircle, Upload, FileText, MapPin, Calendar } from 'lucide-react';
 import { hmsApi } from '../../lib/hmsSupabase';
 import jsPDF from 'jspdf';
+import { AssistantPanel } from './AssistantPanel';
 
 interface FireResponsible {
   id: string;
@@ -510,6 +511,15 @@ export function FireSafety() {
 
   return (
     <div className="space-y-6">
+      <AssistantPanel
+        seksjon="brann"
+        data={{
+          slokkeutstyr: equipment,
+          rømningsveier: instructions.filter(i => i.instruction_type === 'rømningsvei'),
+          nestekontroll: inspections.length > 0 ? inspections[0].next_inspection_date : null,
+          opplaeringStatus: fireResponsible?.last_course_date ? 'ok' : 'mangler'
+        }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
