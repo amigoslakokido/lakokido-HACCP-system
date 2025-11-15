@@ -520,14 +520,6 @@ export function FireSafety() {
       });
     }
 
-    if (instructions.filter(i => i.instruction_type === 'rømningsvei').length === 0) {
-      actions.push({
-        action: 'create-evacuation-route',
-        label: 'Opprett rømningsvei',
-        data: {}
-      });
-    }
-
     return actions;
   };
 

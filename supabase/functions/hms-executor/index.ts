@@ -34,17 +34,14 @@ Deno.serve(async (req: Request) => {
       case 'create-first-aid-equipment':
         result = await createFirstAidEquipment(supabase, body);
         break;
-      case 'create-evacuation-route':
-        result = await createEvacuationRoute(supabase, body);
+      case 'create-evacuation-plan':
+        result = await createEvacuationPlan(supabase, body);
         break;
       case 'create-risk-assessment':
         result = await createRiskAssessment(supabase, body);
         break;
-      case 'create-environmental-goal':
-        result = await createEnvironmentalGoal(supabase, body);
-        break;
-      case 'create-training-record':
-        result = await createTrainingRecord(supabase, body);
+      case 'create-training-log':
+        result = await createTrainingLog(supabase, body);
         break;
       default:
         throw new Error('Ukjent handling');
@@ -82,7 +79,7 @@ Deno.serve(async (req: Request) => {
 
 async function createFireEquipment(supabase: any, data: any) {
   const { data: result, error } = await supabase
-    .from('hms_fire_safety_equipment')
+    .from('hms_fire_equipment')
     .insert({
       equipment_type: data.equipment_type || 'brannslokker',
       location: data.location || 'Ikke angitt',
@@ -114,13 +111,14 @@ async function createFirstAidEquipment(supabase: any, data: any) {
   return result;
 }
 
-async function createEvacuationRoute(supabase: any, data: any) {
+async function createEvacuationPlan(supabase: any, data: any) {
   const { data: result, error } = await supabase
-    .from('hms_evacuation_routes')
+    .from('hms_evacuation_plan')
     .insert({
-      route_name: data.route_name || 'Rømningsvei',
-      description: data.description || 'Rømningsvei må beskrives',
+      plan_name: data.plan_name || 'Evakueringsplan',
+      description: data.description || 'Beskrivelse må legges til',
       meeting_point: data.meeting_point || 'Ikke angitt',
+      evacuation_leader: data.evacuation_leader || 'Ikke angitt',
       status: 'active'
     })
     .select()
@@ -134,14 +132,15 @@ async function createRiskAssessment(supabase: any, data: any) {
   const { data: result, error } = await supabase
     .from('hms_risk_assessments')
     .insert({
-      risk_area: data.risk_area || 'Område må angis',
-      risk_description: data.risk_description || 'Beskrivelse mangler',
-      probability: data.probability || 'medium',
-      consequence: data.consequence || 'medium',
-      risk_level: data.risk_level || 'medium',
-      measures: data.measures || 'Tiltak må defineres',
+      hazard_type: data.hazard_type || 'Faremoment',
+      hazard_description: data.hazard_description || 'Beskrivelse må legges til',
+      likelihood: data.likelihood || 3,
+      consequence: data.consequence || 3,
+      preventive_measures: data.preventive_measures || 'Tiltak må defineres',
       responsible_person: data.responsible_person || 'Ikke tildelt',
-      status: 'open'
+      deadline: data.deadline || null,
+      status: data.status || 'Åpen',
+      notes: data.notes || ''
     })
     .select()
     .single();
@@ -150,33 +149,17 @@ async function createRiskAssessment(supabase: any, data: any) {
   return result;
 }
 
-async function createEnvironmentalGoal(supabase: any, data: any) {
+async function createTrainingLog(supabase: any, data: any) {
   const { data: result, error } = await supabase
-    .from('hms_environmental_goals')
-    .insert({
-      goal_title: data.goal_title || 'Miljømål',
-      description: data.description || 'Beskrivelse må legges til',
-      target_date: data.target_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      responsible_person: data.responsible_person || 'Ikke tildelt',
-      status: 'active'
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return result;
-}
-
-async function createTrainingRecord(supabase: any, data: any) {
-  const { data: result, error } = await supabase
-    .from('hms_training_records')
+    .from('training_log')
     .insert({
       employee_name: data.employee_name || 'Navn må angis',
       training_type: data.training_type || 'Generell HMS',
       training_date: data.training_date || new Date().toISOString().split('T')[0],
-      valid_until: data.valid_until || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      certificate_number: data.certificate_number || '',
-      status: 'active'
+      instructor: data.instructor || 'Ikke angitt',
+      duration_hours: data.duration_hours || 1,
+      completion_status: 'completed',
+      notes: data.notes || ''
     })
     .select()
     .single();

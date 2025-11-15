@@ -202,6 +202,20 @@ export function RiskAssessment() {
     return <div className="text-center py-8">Laster...</div>;
   }
 
+  const getExecuteActions = () => {
+    const actions = [];
+
+    if (risks.length === 0) {
+      actions.push({
+        action: 'create-risk-assessment',
+        label: 'Opprett risikovurdering',
+        data: { hazard_type: 'Faremoment' }
+      });
+    }
+
+    return actions;
+  };
+
   return (
     <div className="space-y-6">
       <AssistantPanel
@@ -210,6 +224,10 @@ export function RiskAssessment() {
           risikoområder: risks,
           høyRisiko: risks.filter(a => a.risk_level === 'høy'),
           sistOppdatert: risks.length > 0 ? risks.created_at : null
+        }}
+        executeActions={getExecuteActions()}
+        onExecuteSuccess={() => {
+          loadRisks();
         }}
       />
       <div className="flex items-center justify-between">
