@@ -18,6 +18,7 @@ import { FireSafety } from './FireSafety';
 import { Evacuation } from './Evacuation';
 import { HMSTraining } from './HMSTraining';
 import { EnvironmentMain } from './EnvironmentMain';
+import { DocumentsManager } from './DocumentsManager';
 import {
   LayoutDashboard,
   AlertTriangle,
@@ -163,10 +164,7 @@ export function HMSApp() {
       name: '📁 Dokumenter',
       icon: FileStack,
       items: [
-        { id: 'documents-archive', name: 'Dokumentarkiv', icon: FileStack },
-        { id: 'documents-drawings', name: 'Tegninger', icon: MapPin },
-        { id: 'documents-contracts', name: 'Kontrakter', icon: FileText },
-        { id: 'documents-correspondence', name: 'Korrespondanse', icon: Mail },
+        { id: 'documents-manager', name: 'Dokumenter', icon: FileStack },
       ]
     },
     {
@@ -253,6 +251,8 @@ export function HMSApp() {
         return <Reports />;
       case 'control-maintenance':
         return <Maintenance />;
+      case 'documents-manager':
+        return <DocumentsManager />;
 
       default:
         const currentItem = navigationItems
