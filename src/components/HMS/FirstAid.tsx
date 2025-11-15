@@ -263,8 +263,8 @@ export function FirstAid() {
         seksjon="forstehjelp"
         data={{
           utstyr: equipment,
-          opplartePersoner: trainedPersonnel.length,
-          utlopsdato: trainedPersonnel.length > 0 ? trainedPersonnel[0].certificate_valid_until : null
+          opplartePersoner: responsible ? 1 : 0,
+          utlopsdato: responsible?.certificate_valid_until || null
         }}
       />
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
