@@ -83,9 +83,12 @@ async function createFireEquipment(supabase: any, data: any) {
     .insert({
       equipment_type: data.equipment_type || 'brannslokker',
       location: data.location || 'Ikke angitt',
-      last_inspection_date: data.last_inspection_date || new Date().toISOString().split('T')[0],
-      next_inspection_date: data.next_inspection_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'ok'
+      description: data.description || '',
+      installation_date: data.installation_date || new Date().toISOString().split('T')[0],
+      last_service_date: data.last_service_date || new Date().toISOString().split('T')[0],
+      next_service_date: data.next_service_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'ok',
+      notes: data.notes || ''
     })
     .select()
     .single();
@@ -100,9 +103,11 @@ async function createFirstAidEquipment(supabase: any, data: any) {
     .insert({
       equipment_name: data.equipment_name || 'Førstehjelpsskap',
       location: data.location || 'Ikke angitt',
-      last_inspection_date: data.last_inspection_date || new Date().toISOString().split('T')[0],
-      next_inspection_date: data.next_inspection_date || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      status: 'ok'
+      quantity: data.quantity || 1,
+      condition: data.condition || 'god',
+      last_check_date: data.last_check_date || new Date().toISOString().split('T')[0],
+      checked_by: data.checked_by || 'System',
+      notes: data.notes || ''
     })
     .select()
     .single();
@@ -115,11 +120,11 @@ async function createEvacuationPlan(supabase: any, data: any) {
   const { data: result, error } = await supabase
     .from('hms_evacuation_plan')
     .insert({
-      plan_name: data.plan_name || 'Evakueringsplan',
-      description: data.description || 'Beskrivelse må legges til',
-      meeting_point: data.meeting_point || 'Ikke angitt',
-      evacuation_leader: data.evacuation_leader || 'Ikke angitt',
-      status: 'active'
+      warning_procedure: data.warning_procedure || 'Varslingsprosedyre må angis',
+      evacuation_procedure: data.evacuation_procedure || 'Evakueringsprosedyre må angis',
+      escape_routes: data.escape_routes || 'Rømningsveier må beskrives',
+      assembly_point: data.assembly_point || 'Ikke angitt',
+      post_evacuation_instructions: data.post_evacuation_instructions || 'Instruksjoner etter evakuering må angis'
     })
     .select()
     .single();
@@ -154,11 +159,12 @@ async function createTrainingLog(supabase: any, data: any) {
     .from('training_log')
     .insert({
       employee_name: data.employee_name || 'Navn må angis',
+      employee_id: data.employee_id || null,
       training_type: data.training_type || 'Generell HMS',
+      training_name: data.training_name || 'HMS Opplæring',
       training_date: data.training_date || new Date().toISOString().split('T')[0],
-      instructor: data.instructor || 'Ikke angitt',
-      duration_hours: data.duration_hours || 1,
-      completion_status: 'completed',
+      completion_date: data.completion_date || new Date().toISOString().split('T')[0],
+      status: 'completed',
       notes: data.notes || ''
     })
     .select()
