@@ -198,10 +198,6 @@ export function RiskAssessment() {
     doc.save('risikovurdering.pdf');
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Laster...</div>;
-  }
-
   const getExecuteActions = () => {
     const actions = [];
 
@@ -215,6 +211,10 @@ export function RiskAssessment() {
 
     return actions;
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Laster...</div>;
+  }
 
   return (
     <div className="space-y-6">

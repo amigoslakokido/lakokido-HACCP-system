@@ -505,10 +505,6 @@ export function FireSafety() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center py-8">Laster...</div>;
-  }
-
   const getExecuteActions = () => {
     const actions = [];
 
@@ -522,6 +518,10 @@ export function FireSafety() {
 
     return actions;
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Laster...</div>;
+  }
 
   return (
     <div className="space-y-6">

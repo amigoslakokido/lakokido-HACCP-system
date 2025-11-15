@@ -249,14 +249,6 @@ export function FirstAid() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-slate-600">Laster...</div>
-      </div>
-    );
-  }
-
   const getExecuteActions = () => {
     const actions = [];
 
@@ -270,6 +262,14 @@ export function FirstAid() {
 
     return actions;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-slate-600">Laster...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
