@@ -56,22 +56,25 @@ export function AssistantPanel({ seksjon, data = {} }: AssistantPanelProps) {
   };
 
   return (
-    <>
-      <button
-        onClick={handleOpen}
-        className="fixed top-4 right-4 z-40 w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
-        title="Åpne assistent"
-      >
-        <HelpCircle className="w-5 h-5" />
-      </button>
+    <div className="relative">
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={handleOpen}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition-all hover:shadow-xl"
+          title="Åpne assistent"
+        >
+          <HelpCircle className="w-5 h-5" />
+          <span className="text-sm font-medium">Assistent</span>
+        </button>
+      </div>
 
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 bg-black bg-opacity-30 z-40"
+            className="fixed inset-0 bg-black bg-opacity-30 z-[101]"
             onClick={handleClose}
           />
-          <div className="fixed top-0 right-0 h-full w-full md:w-[480px] bg-white shadow-2xl z-50 overflow-y-auto">
+          <div className="fixed top-0 right-0 h-full w-full md:w-[480px] bg-white shadow-2xl z-[102] overflow-y-auto">
             <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-md">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Assistent</h2>
@@ -185,6 +188,6 @@ export function AssistantPanel({ seksjon, data = {} }: AssistantPanelProps) {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }
