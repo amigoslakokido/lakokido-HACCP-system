@@ -207,9 +207,9 @@ export function RiskAssessment() {
       <AssistantPanel
         seksjon="risikoanalyse"
         data={{
-          risikoområder: assessments,
-          høyRisiko: assessments.filter(a => a.risk_level === 'høy'),
-          sistOppdatert: assessments.length > 0 ? assessments[0].assessment_date : null
+          risikoområder: risks,
+          høyRisiko: risks.filter(a => a.risk_level === 'høy'),
+          sistOppdatert: risks.length > 0 ? risks.created_at : null
         }}
       />
       <div className="flex items-center justify-between">
