@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, HelpCircle, Loader2 } from 'lucide-react';
+import { X, HelpCircle, Loader2, Play } from 'lucide-react';
 
 interface AssistantResponse {
   forslag: string[];
@@ -8,14 +8,23 @@ interface AssistantResponse {
   manglende: string[];
 }
 
-interface AssistantPanelProps {
-  seksjon: string;
+interface ExecuteAction {
+  action: string;
+  label: string;
   data?: any;
 }
 
-export function AssistantPanel({ seksjon, data = {} }: AssistantPanelProps) {
+interface AssistantPanelProps {
+  seksjon: string;
+  data?: any;
+  executeActions?: ExecuteAction[];
+  onExecuteSuccess?: () => void;
+}
+
+export function AssistantPanel({ seksjon, data = {}, executeActions = [], onExecuteSuccess }: AssistantPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [executing, setExecuting] = useState<string | null>(null);
   const [response, setResponse] = useState<AssistantResponse | null>(null);
 
   const fetchAssistance = async () => {
@@ -53,6 +62,39 @@ export function AssistantPanel({ seksjon, data = {} }: AssistantPanelProps) {
 
   const handleClose = () => {
     setIsOpen(false);
+  };
+
+  const handleExecute = async (action: string, actionData?: any) => {
+    setExecuting(action);
+    try {
+      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/hms-executor/${action}`;
+      const headers = {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      };
+
+      const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(actionData || {})
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          alert(result.message || 'Handling utført. Du kan nå redigere dataene.');
+          if (onExecuteSuccess) {
+            onExecuteSuccess();
+          }
+          fetchAssistance();
+        }
+      }
+    } catch (error) {
+      console.error('Feil ved utføring av handling:', error);
+      alert('Kunne ikke utføre handlingen. Prøv igjen.');
+    } finally {
+      setExecuting(null);
+    }
   };
 
   return (
@@ -164,6 +206,44 @@ export function AssistantPanel({ seksjon, data = {} }: AssistantPanelProps) {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {executeActions.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                        <Play className="w-4 h-4 text-green-600" />
+                        Hurtighandlinger
+                      </h3>
+                      <p className="text-xs text-green-700 mb-3">
+                        Systemet kan opprette manglende poster med standardverdier.
+                        Alt som opprettes kan redigeres etterpå.
+                      </p>
+                      <div className="space-y-2">
+                        {executeActions.map((action, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleExecute(action.action, action.data)}
+                            disabled={executing === action.action}
+                            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                          >
+                            {executing === action.action ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Oppretter...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4" />
+                                {action.label}
+                              </>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-green-600 mt-3 italic">
+                        ✓ Alle verdier kan endres etter opprettelse
+                      </p>
                     </div>
                   )}
 

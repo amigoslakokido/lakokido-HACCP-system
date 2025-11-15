@@ -257,6 +257,20 @@ export function FirstAid() {
     );
   }
 
+  const getExecuteActions = () => {
+    const actions = [];
+
+    if (equipment.length === 0) {
+      actions.push({
+        action: 'create-first-aid-equipment',
+        label: 'Opprett førstehjelpsskap',
+        data: { equipment_name: 'Førstehjelpsskap' }
+      });
+    }
+
+    return actions;
+  };
+
   return (
     <div className="space-y-6">
       <AssistantPanel
@@ -265,6 +279,10 @@ export function FirstAid() {
           utstyr: equipment,
           opplartePersoner: responsible ? 1 : 0,
           utlopsdato: responsible?.certificate_valid_until || null
+        }}
+        executeActions={getExecuteActions()}
+        onExecuteSuccess={() => {
+          loadData();
         }}
       />
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">

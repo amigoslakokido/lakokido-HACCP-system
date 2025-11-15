@@ -509,6 +509,28 @@ export function FireSafety() {
     return <div className="text-center py-8">Laster...</div>;
   }
 
+  const getExecuteActions = () => {
+    const actions = [];
+
+    if (equipment.length === 0) {
+      actions.push({
+        action: 'create-fire-equipment',
+        label: 'Opprett slokkeutstyr',
+        data: { equipment_type: 'brannslokker' }
+      });
+    }
+
+    if (instructions.filter(i => i.instruction_type === 'rømningsvei').length === 0) {
+      actions.push({
+        action: 'create-evacuation-route',
+        label: 'Opprett rømningsvei',
+        data: {}
+      });
+    }
+
+    return actions;
+  };
+
   return (
     <div className="space-y-6">
       <AssistantPanel
@@ -518,6 +540,10 @@ export function FireSafety() {
           rømningsveier: instructions.filter(i => i.instruction_type === 'rømningsvei'),
           nestekontroll: inspections.length > 0 ? inspections[0].next_inspection_date : null,
           opplaeringStatus: fireResponsible?.last_course_date ? 'ok' : 'mangler'
+        }}
+        executeActions={getExecuteActions()}
+        onExecuteSuccess={() => {
+          loadData();
         }}
       />
       <div className="flex items-center justify-between">
