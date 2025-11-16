@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { AlertCircle, Plus, Save, Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { SmartInput } from './SmartInput';
 
 interface Deviation {
   id: string;
@@ -167,6 +168,33 @@ export function Deviations() {
           <h3 className="text-lg font-semibold mb-4">
             {editingId ? 'Rediger avvik' : 'Registrer nytt avvik'}
           </h3>
+
+          {!editingId && (
+            <div className="mb-6">
+              <SmartInput
+                section="deviation"
+                onAnalysisComplete={(analysis) => {
+                  if (analysis.autoFillData) {
+                    setFormData({
+                      ...formData,
+                      deviation_type: analysis.autoFillData.deviation_type === 'Førstehjelp' ? 'safety' :
+                                    analysis.autoFillData.deviation_type === 'Brannsikkerhet' ? 'fire' :
+                                    analysis.autoFillData.deviation_type === 'Utstyr/Vedlikehold' ? 'equipment' :
+                                    analysis.autoFillData.deviation_type === 'Hygiene/Renhold' ? 'routines' :
+                                    'other',
+                      description: analysis.autoFillData.description,
+                      risk_level: analysis.autoFillData.severity === 'Høy' ? 'high' :
+                                 analysis.autoFillData.severity === 'Middels' ? 'medium' :
+                                 analysis.autoFillData.severity === 'Kritisk' ? 'critical' : 'low',
+                      status: analysis.autoFillData.status === 'Åpen' ? 'open' : 'open'
+                    });
+                  }
+                }}
+                placeholder="Eksempel: Førstehjelpsskap mangler plaster og bandasjer"
+              />
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

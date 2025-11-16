@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { AlertTriangle, Plus, Save, Edit2, Trash2, Image, FileText } from 'lucide-react';
+import { SmartInput } from './SmartInput';
 
 interface Incident {
   id: string;
@@ -177,6 +178,29 @@ export function IncidentRegistration() {
           <h3 className="text-lg font-semibold mb-4">
             {editingId ? 'Rediger hendelse' : 'Registrer ny hendelse'}
           </h3>
+
+          {!editingId && (
+            <div className="mb-6">
+              <SmartInput
+                section="incident"
+                onAnalysisComplete={(analysis) => {
+                  if (analysis.autoFillData) {
+                    setFormData({
+                      ...formData,
+                      incident_type: analysis.autoFillData.incident_type || formData.incident_type,
+                      description: analysis.autoFillData.description,
+                      severity: analysis.autoFillData.severity === 'Kritisk' ? 'critical' :
+                               analysis.autoFillData.severity === 'Høy' ? 'high' :
+                               analysis.autoFillData.severity === 'Middels' ? 'medium' : 'low',
+                      status: analysis.autoFillData.status || formData.status
+                    });
+                  }
+                }}
+                placeholder="Eksempel: Ansatt kuttet seg på kniv i kjøkkenet"
+              />
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

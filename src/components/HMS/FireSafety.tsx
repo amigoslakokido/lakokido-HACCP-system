@@ -302,10 +302,16 @@ export function FireSafety() {
 
   const saveDeviation = async () => {
     try {
+      const formData = {
+        ...deviationForm,
+        equipment_id: deviationForm.equipment_id || null,
+        deadline: deviationForm.deadline || null
+      };
+
       if (editingDeviationId) {
-        await hmsApi.updateFireDeviation(editingDeviationId, deviationForm);
+        await hmsApi.updateFireDeviation(editingDeviationId, formData);
       } else {
-        await hmsApi.createFireDeviation(deviationForm);
+        await hmsApi.createFireDeviation(formData);
       }
       setIsAddingDeviation(false);
       setEditingDeviationId(null);
