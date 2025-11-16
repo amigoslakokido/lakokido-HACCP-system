@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileText, ListChecks, AlertTriangle } from 'lucide-react';
 import { ReportsList } from './ReportsList';
-import RoutineReportsList from '../RoutineTasks/RoutineReportsList';
+import { CompactRoutineReportsList } from '../RoutineTasks/CompactRoutineReportsList';
 import { CriticalIncidentReports } from './CriticalIncidentReports';
 
 type ReportCategory = 'haccp' | 'routine' | 'critical';
@@ -41,7 +41,7 @@ export function UnifiedReports() {
       case 'haccp':
         return <ReportsList />;
       case 'routine':
-        return <RoutineReportsList />;
+        return <CompactRoutineReportsList />;
       case 'critical':
         return <CriticalIncidentReports />;
       default:

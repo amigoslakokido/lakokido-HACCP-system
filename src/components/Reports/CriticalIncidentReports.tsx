@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AlertTriangle, Calendar, User, Eye, Download, Search, Filter } from 'lucide-react';
+import { AlertTriangle, Eye, Download, Search, Edit, Trash2, Save, X } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 interface CriticalIncident {
   id: string;
@@ -25,6 +26,7 @@ export function CriticalIncidentReports() {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [viewingIncident, setViewingIncident] = useState<CriticalIncident | null>(null);
+  const [editingIncident, setEditingIncident] = useState<CriticalIncident | null>(null);
 
   useEffect(() => {
     loadIncidents();
@@ -44,6 +46,111 @@ export function CriticalIncidentReports() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Er du sikker på at du vil slette denne hendelsen?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('critical_incidents')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setIncidents(incidents.filter(i => i.id !== id));
+      alert('Hendelse slettet!');
+    } catch (error) {
+      console.error('Error deleting:', error);
+      alert('Feil ved sletting');
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingIncident) return;
+
+    try {
+      const { error } = await supabase
+        .from('critical_incidents')
+        .update({
+          title: editingIncident.title,
+          description: editingIncident.description,
+          severity: editingIncident.severity,
+          status: editingIncident.status
+        })
+        .eq('id', editingIncident.id);
+
+      if (error) throw error;
+
+      setIncidents(incidents.map(i => i.id === editingIncident.id ? editingIncident : i));
+      setEditingIncident(null);
+      alert('Hendelse oppdatert!');
+    } catch (error) {
+      console.error('Error updating:', error);
+      alert('Feil ved oppdatering');
+    }
+  };
+
+  const downloadPDF = (incident: CriticalIncident) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let yPos = 20;
+
+    doc.setFontSize(18);
+    doc.text('KRITISK HENDELSE RAPPORT', pageWidth / 2, yPos, { align: 'center' });
+
+    yPos += 15;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tittel:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(incident.title, 50, yPos);
+
+    yPos += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Dato:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(new Date(incident.incident_date).toLocaleDateString('nb-NO'), 50, yPos);
+
+    yPos += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Alvorlighetsgrad:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(getSeverityLabel(incident.severity), 70, yPos);
+
+    yPos += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Status:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(getStatusLabel(incident.status), 50, yPos);
+
+    yPos += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Rapportert av:', 20, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(incident.reported_by, 60, yPos);
+
+    yPos += 15;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Beskrivelse:', 20, yPos);
+    yPos += 7;
+    doc.setFont('helvetica', 'normal');
+    const descLines = doc.splitTextToSize(incident.description, pageWidth - 40);
+    doc.text(descLines, 20, yPos);
+    yPos += (descLines.length * 7);
+
+    if (incident.ai_analysis) {
+      yPos += 10;
+      doc.setFont('helvetica', 'bold');
+      doc.text('AI Analyse:', 20, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      const aiLines = doc.splitTextToSize(incident.ai_analysis, pageWidth - 40);
+      doc.text(aiLines, 20, yPos);
+    }
+
+    doc.save(`kritisk-hendelse-${incident.id}.pdf`);
   };
 
   const getSeverityColor = (severity: string) => {
@@ -94,6 +201,88 @@ export function CriticalIncidentReports() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (editingIncident) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Rediger hendelse</h2>
+          <button
+            onClick={() => setEditingIncident(null)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tittel</label>
+            <input
+              type="text"
+              value={editingIncident.title}
+              onChange={(e) => setEditingIncident({...editingIncident, title: e.target.value})}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Beskrivelse</label>
+            <textarea
+              value={editingIncident.description}
+              onChange={(e) => setEditingIncident({...editingIncident, description: e.target.value})}
+              rows={6}
+              className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alvorlighetsgrad</label>
+              <select
+                value={editingIncident.severity}
+                onChange={(e) => setEditingIncident({...editingIncident, severity: e.target.value as any})}
+                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="critical">Kritisk</option>
+                <option value="high">Høy</option>
+                <option value="medium">Middels</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+              <select
+                value={editingIncident.status}
+                onChange={(e) => setEditingIncident({...editingIncident, status: e.target.value as any})}
+                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="open">Åpen</option>
+                <option value="in_progress">Under behandling</option>
+                <option value="resolved">Løst</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={handleUpdate}
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <Save className="w-5 h-5" />
+              Lagre endringer
+            </button>
+            <button
+              onClick={() => setEditingIncident(null)}
+              className="px-6 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-all"
+            >
+              Avbryt
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -158,15 +347,25 @@ export function CriticalIncidentReports() {
             </div>
           )}
 
-          {viewingIncident.resolved_at && (
-            <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-4">
-              <h3 className="font-bold text-gray-900 mb-2">Løsning</h3>
-              <div className="text-sm text-gray-700">
-                <p>Løst av: {viewingIncident.resolved_by}</p>
-                <p>Dato: {new Date(viewingIncident.resolved_at).toLocaleString('nb-NO')}</p>
-              </div>
-            </div>
-          )}
+          <div className="flex gap-3 pt-4 border-t">
+            <button
+              onClick={() => downloadPDF(viewingIncident)}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Last ned PDF
+            </button>
+            <button
+              onClick={() => {
+                setViewingIncident(null);
+                setEditingIncident(viewingIncident);
+              }}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <Edit className="w-5 h-5" />
+              Rediger
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -242,51 +441,70 @@ export function CriticalIncidentReports() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Dato</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Tittel</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Alvorlighetsgrad</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Rapportert av</th>
-                <th className="px-6 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Handlinger</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Dato</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Tittel</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Alvorlighetsgrad</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase">Handlinger</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredIncidents.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                     Ingen hendelser funnet
                   </td>
                 </tr>
               ) : (
                 filteredIncidents.map((incident) => (
                   <tr key={incident.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                       {new Date(incident.incident_date).toLocaleDateString('nb-NO')}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                    <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
                       {incident.title}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-lg text-xs font-bold border-2 ${getSeverityColor(incident.severity)}`}>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold border-2 ${getSeverityColor(incident.severity)}`}>
                         {getSeverityLabel(incident.severity)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-lg text-xs font-bold border-2 ${getStatusColor(incident.status)}`}>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-bold border-2 ${getStatusColor(incident.status)}`}>
                         {getStatusLabel(incident.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {incident.reported_by}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <button
-                        onClick={() => setViewingIncident(incident)}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Vis
-                      </button>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setViewingIncident(incident)}
+                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          title="Vis"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingIncident(incident)}
+                          className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                          title="Rediger"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => downloadPDF(incident)}
+                          className="p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                          title="Last ned PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(incident.id)}
+                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                          title="Slett"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
