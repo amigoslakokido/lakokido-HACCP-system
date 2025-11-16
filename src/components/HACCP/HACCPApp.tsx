@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { HACCPDashboard } from '../Dashboard/HACCPDashboard';
 import { DailyRoutine } from '../RoutineTasks/DailyRoutine';
 import RoutineReportsList from '../RoutineTasks/RoutineReportsList';
 import { TemperatureControl } from '../Temperature/TemperatureControl';
@@ -6,10 +7,10 @@ import { CleaningTasks } from '../Cleaning/CleaningTasks';
 import { ReportsList } from '../Reports/ReportsList';
 import { SettingsModule } from '../Settings/SettingsModule';
 import { CriticalIncidents } from '../Incidents/CriticalIncidents';
-import { ClipboardCheck, Thermometer, Sparkles, FileText, Settings, Menu, X, AlertTriangle, FileBarChart } from 'lucide-react';
+import { Home, ClipboardCheck, Thermometer, Sparkles, FileText, Settings, Menu, X, AlertTriangle, FileBarChart } from 'lucide-react';
 
 export function HACCPApp() {
-  const [currentView, setCurrentView] = useState('routine');
+  const [currentView, setCurrentView] = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -39,33 +40,33 @@ export function HACCPApp() {
   }, []);
 
   const navigation = [
+    { id: 'dashboard', name: 'Dashboard', icon: Home },
     { id: 'routine', name: 'Daglige rutiner', icon: ClipboardCheck },
     { id: 'temperature', name: 'Temperaturkontroll', icon: Thermometer },
     { id: 'cleaning', name: 'Rengjøring', icon: Sparkles },
-    { id: 'reports', name: 'HACCP-rapporter', icon: FileText },
-    { id: 'routine-reports', name: 'Rutinerapporter', icon: FileBarChart },
+    { id: 'reports', name: 'Rapporter', icon: FileText },
     { id: 'incidents', name: 'Kritiske hendelser', icon: AlertTriangle },
     { id: 'settings', name: 'Innstillinger', icon: Settings },
   ];
 
   const renderView = () => {
     switch (currentView) {
+      case 'dashboard':
+        return <HACCPDashboard />;
       case 'routine':
-        return <DailyRoutine />;
+        return <DailyRoutine language="no" />;
       case 'temperature':
         return <TemperatureControl />;
       case 'cleaning':
         return <CleaningTasks />;
       case 'reports':
         return <ReportsList />;
-      case 'routine-reports':
-        return <RoutineReportsList />;
       case 'incidents':
         return <CriticalIncidents />;
       case 'settings':
         return <SettingsModule />;
       default:
-        return <DailyRoutine />;
+        return <HACCPDashboard />;
     }
   };
 
