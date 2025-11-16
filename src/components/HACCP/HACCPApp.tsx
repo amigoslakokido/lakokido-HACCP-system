@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { HACCPDashboard } from '../Dashboard/HACCPDashboard';
-import { DailyRoutine } from '../RoutineTasks/DailyRoutine';
+import { CompactDailyRoutine } from '../RoutineTasks/CompactDailyRoutine';
 import RoutineReportsList from '../RoutineTasks/RoutineReportsList';
 import { TemperatureControl } from '../Temperature/TemperatureControl';
 import { CleaningTasks } from '../Cleaning/CleaningTasks';
@@ -54,7 +54,7 @@ export function HACCPApp() {
       case 'dashboard':
         return <HACCPDashboard />;
       case 'routine':
-        return <DailyRoutine language="no" />;
+        return <CompactDailyRoutine language="no" />;
       case 'temperature':
         return <TemperatureControl />;
       case 'cleaning':
