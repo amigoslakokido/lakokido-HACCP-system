@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { CompanyInfo } from './CompanyInfo';
 import { EmployeesManagement } from './EmployeesManagement';
 import { DocumentsManager } from './DocumentsManager';
-import { Building2, Users, FileText, QrCode } from 'lucide-react';
+import { EmployeeScheduler } from './EmployeeScheduler';
+import { Building2, Users, FileText, QrCode, Calendar } from 'lucide-react';
 
 export function CompanyModule() {
-  const [activeTab, setActiveTab] = useState<'info' | 'employees' | 'documents' | 'qr'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'employees' | 'documents' | 'schedule' | 'qr'>('info');
 
   const tabs = [
     { id: 'info' as const, label: 'معلومات الشركة', label_no: 'Firmainfo', icon: Building2 },
     { id: 'employees' as const, label: 'الموظفين', label_no: 'Ansatte', icon: Users },
+    { id: 'schedule' as const, label: 'الدوام', label_no: 'Turnusplan', icon: Calendar },
     { id: 'documents' as const, label: 'المستندات', label_no: 'Dokumenter', icon: FileText },
     { id: 'qr' as const, label: 'QR رفع', label_no: 'QR Upload', icon: QrCode }
   ];
@@ -20,6 +22,8 @@ export function CompanyModule() {
         return <CompanyInfo />;
       case 'employees':
         return <EmployeesManagement />;
+      case 'schedule':
+        return <EmployeeScheduler />;
       case 'documents':
         return <DocumentsManager />;
       case 'qr':

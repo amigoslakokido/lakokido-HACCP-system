@@ -238,5 +238,73 @@ export const companyApi = {
       .getPublicUrl(path);
 
     return data.publicUrl;
+  },
+
+  async getEmployeeSchedules() {
+    return await supabase
+      .from('employee_schedules')
+      .select('*, employees(id, name)')
+      .eq('is_active', true)
+      .order('day_of_week')
+      .order('schedule_name');
+  },
+
+  async getScheduledEmployeesForDate(date: string) {
+    const { data, error } = await supabase
+      .rpc('get_scheduled_employees_for_date', { target_date: date });
+
+    if (error) throw error;
+    return { data, error: null };
+  },
+
+  async createEmployeeSchedule(schedule: {
+    employee_id: string;
+    schedule_name: string;
+    day_of_week: number;
+    start_date: string;
+    end_date?: string | null;
+    notes?: string;
+  }) {
+    return await supabase
+      .from('employee_schedules')
+      .insert(schedule)
+      .select()
+      .single();
+  },
+
+  async updateEmployeeSchedule(id: string, data: Partial<{
+    schedule_name: string;
+    day_of_week: number;
+    is_active: boolean;
+    start_date: string;
+    end_date: string | null;
+    notes: string;
+  }>) {
+    return await supabase
+      .from('employee_schedules')
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single();
+  },
+
+  async deleteEmployeeSchedule(id: string) {
+    return await supabase
+      .from('employee_schedules')
+      .delete()
+      .eq('id', id);
+  },
+
+  async bulkCreateSchedules(schedules: Array<{
+    employee_id: string;
+    schedule_name: string;
+    day_of_week: number;
+    start_date: string;
+    end_date?: string | null;
+  }>) {
+    return await supabase
+      .from('employee_schedules')
+      .insert(schedules)
+      .select();
   }
 };

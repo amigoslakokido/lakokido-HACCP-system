@@ -180,18 +180,32 @@ export async function generateIntelligentReport(options: GenerateReportOptions) 
       await supabase.from('cleaning_logs').insert(cleaningLogs);
     }
 
-    // Hygiene checks - show all active employees who work that day
-    let numEmployeesForDay;
-    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
-      // Monday-Thursday: 2-3 employees
-      numEmployeesForDay = Math.random() < 0.5 ? 2 : 3;
-    } else {
-      // Friday-Sunday: 3-4 employees
-      numEmployeesForDay = Math.floor(Math.random() * 2) + 3;
-    }
+    // Hygiene checks - get scheduled employees for this day
+    const { data: scheduledEmployees } = await supabase
+      .rpc('get_scheduled_employees_for_date', { target_date: date });
 
-    const shuffledEmployees = [...allStaff].sort(() => Math.random() - 0.5);
-    const selectedEmployees = shuffledEmployees.slice(0, Math.min(numEmployeesForDay, allStaff.length));
+    let selectedEmployees = [];
+
+    if (scheduledEmployees && scheduledEmployees.length > 0) {
+      // Use scheduled employees
+      selectedEmployees = scheduledEmployees.map((se: any) => ({
+        id: se.employee_id,
+        name: se.employee_name
+      }));
+    } else {
+      // Fallback: use random employees if no schedule exists
+      let numEmployeesForDay;
+      if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+        // Monday-Thursday: 2-3 employees
+        numEmployeesForDay = Math.random() < 0.5 ? 2 : 3;
+      } else {
+        // Friday-Sunday: 3-4 employees
+        numEmployeesForDay = Math.floor(Math.random() * 2) + 3;
+      }
+
+      const shuffledEmployees = [...allStaff].sort(() => Math.random() - 0.5);
+      selectedEmployees = shuffledEmployees.slice(0, Math.min(numEmployeesForDay, allStaff.length));
+    }
 
     for (const employee of selectedEmployees) {
       const allOk = Math.random() > 0.1;
