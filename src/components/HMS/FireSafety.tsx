@@ -512,7 +512,7 @@ export function FireSafety() {
       actions.push({
         action: 'create-fire-equipment',
         label: 'Opprett slokkeutstyr',
-        data: { equipment_type: 'brannslokker' }
+        data: { equipment_type: 'Brannslukker' }
       });
     }
 
@@ -529,13 +529,13 @@ export function FireSafety() {
         seksjon="brann"
         data={{
           slokkeutstyr: equipment,
-          rømningsveier: instructions.filter(i => i.instruction_type === 'rømningsvei'),
-          nestekontroll: inspections.length > 0 ? inspections[0].next_inspection_date : null,
+          rømningsveier: instructions,
+          nestekontroll: inspections.length > 0 ? inspections[0].inspection_date : null,
           opplaeringStatus: fireResponsible?.last_course_date ? 'ok' : 'mangler'
         }}
         executeActions={getExecuteActions()}
         onExecuteSuccess={() => {
-          loadData();
+          loadAllData();
         }}
       />
       <div className="flex items-center justify-between">
