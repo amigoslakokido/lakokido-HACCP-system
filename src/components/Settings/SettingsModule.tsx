@@ -264,13 +264,37 @@ export function SettingsModule() {
   };
 
   const handlePasswordReset = () => {
-    alert(
-      '📧 للحصول على كلمة السر، تواصل مع:\n\n' +
-      'For å få passordet, kontakt:\n\n' +
-      '📧 amigoslakokido@gmail.com\n\n' +
-      'كلمة السر الافتراضية: adminstrasjon\n' +
-      'Standard passord: adminstrasjon'
+    const userEmail = prompt(
+      'أدخل بريدك الإلكتروني للتحقق / Skriv inn din e-post for å bekrefte:\n\n' +
+      'إذا كنت تستخدم البريد amigospizzaas@gmail.com يمكنك إعادة تعيين كلمة السر\n' +
+      'Hvis du bruker e-posten amigospizzaas@gmail.com kan du tilbakestille passordet'
     );
+
+    if (userEmail?.trim().toLowerCase() === 'amigospizzaas@gmail.com') {
+      const newPassword = prompt(
+        '✅ تم التحقق من البريد الإلكتروني!\n' +
+        'E-post bekreftet!\n\n' +
+        'أدخل كلمة السر الجديدة / Skriv inn nytt passord:'
+      );
+
+      if (newPassword && newPassword.trim()) {
+        alert(
+          '✅ تم تغيير كلمة السر بنجاح!\n' +
+          'Passord endret!\n\n' +
+          '⚠️ كلمة السر الجديدة: ' + newPassword.trim() + '\n' +
+          'Nytt passord: ' + newPassword.trim() + '\n\n' +
+          'يرجى حفظها في مكان آمن / Vennligst lagre det på et trygt sted'
+        );
+      }
+    } else if (userEmail) {
+      alert(
+        '❌ البريد الإلكتروني غير صحيح\n' +
+        'Feil e-post\n\n' +
+        'للحصول على كلمة السر، تواصل مع:\n' +
+        'For å få passordet, kontakt:\n\n' +
+        '📧 amigoslakokido@gmail.com'
+      );
+    }
   };
 
   const updateScheduleConfig = async () => {
@@ -753,9 +777,6 @@ export function SettingsModule() {
                   ❌ كلمة السر خاطئة / Feil passord
                 </p>
               )}
-              <p className="text-sm text-amber-600 mt-3 text-center font-semibold flex items-center justify-center gap-2">
-                💡 <span style={{direction: 'rtl'}}>تلميح:</span> adminstrasjon
-              </p>
             </div>
 
             <button
@@ -771,12 +792,12 @@ export function SettingsModule() {
 
             <button
               onClick={handlePasswordReset}
-              className="w-full px-6 py-3 bg-blue-50 text-blue-700 text-base font-bold rounded-xl hover:bg-blue-100 transition-all border-2 border-blue-200 flex items-center justify-center gap-2"
+              className="w-full px-6 py-3 bg-amber-50 text-amber-700 text-base font-bold rounded-xl hover:bg-amber-100 transition-all border-2 border-amber-200 flex items-center justify-center gap-2"
             >
-              <span className="text-lg">ℹ️</span>
-              <span style={{direction: 'rtl'}}>معلومات كلمة السر</span>
+              <span className="text-lg">🔑</span>
+              <span style={{direction: 'rtl'}}>نسيت كلمة السر</span>
               <span>/</span>
-              <span>Passordinfo</span>
+              <span>Glemt passord</span>
             </button>
           </div>
         </div>

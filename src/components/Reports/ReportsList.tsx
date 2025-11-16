@@ -20,7 +20,8 @@ export function ReportsList() {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const reportsPerPage = 10;
+  const [reportCategory, setReportCategory] = useState<'all' | 'daily' | 'routine' | 'critical'>('all');
+  const reportsPerPage = 50;
 
   useEffect(() => {
     loadReports();

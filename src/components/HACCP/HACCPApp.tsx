@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import DailyRoutine from '../RoutineTasks/DailyRoutine';
+import { DailyRoutine } from '../RoutineTasks/DailyRoutine';
 import RoutineReportsList from '../RoutineTasks/RoutineReportsList';
 import { TemperatureControl } from '../Temperature/TemperatureControl';
 import { CleaningTasks } from '../Cleaning/CleaningTasks';

@@ -18,7 +18,11 @@ interface Employee {
   name: string;
 }
 
-export default function DailyRoutine() {
+interface DailyRoutineProps {
+  language?: 'ar' | 'no';
+}
+
+export function DailyRoutine({ language: propLanguage }: DailyRoutineProps) {
   const [tasks, setTasks] = useState<RoutineTask[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
@@ -26,7 +30,7 @@ export default function DailyRoutine() {
   const [completedToday, setCompletedToday] = useState<Set<string>>(new Set());
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const [language, setLanguage] = useState<'ar' | 'no'>('ar');
+  const [language, setLanguage] = useState<'ar' | 'no'>(propLanguage || 'no');
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [showManagement, setShowManagement] = useState(false);
