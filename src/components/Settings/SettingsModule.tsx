@@ -265,12 +265,10 @@ export function SettingsModule() {
 
   const handlePasswordReset = () => {
     const userEmail = prompt(
-      'أدخل بريدك الإلكتروني للتحقق / Skriv inn din e-post for å bekrefte:\n\n' +
-      'إذا كنت تستخدم البريد amigospizzaas@gmail.com يمكنك إعادة تعيين كلمة السر\n' +
-      'Hvis du bruker e-posten amigospizzaas@gmail.com kan du tilbakestille passordet'
+      'أدخل بريدك الإلكتروني للتحقق / Skriv inn din e-post for å bekrefte:'
     );
 
-    if (userEmail?.trim().toLowerCase() === 'amigospizzaas@gmail.com') {
+    if (userEmail?.trim().toLowerCase() === 'amigoslakokido@gmail.com') {
       const newPassword = prompt(
         '✅ تم التحقق من البريد الإلكتروني!\n' +
         'E-post bekreftet!\n\n' +
@@ -768,7 +766,7 @@ export function SettingsModule() {
                 onChange={(e) => setPasswordInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
                 className="w-full px-5 py-4 border-3 border-blue-300 rounded-2xl focus:ring-4 focus:ring-blue-400 focus:border-blue-500 transition-all text-xl text-center font-bold text-gray-700 shadow-sm"
-                placeholder="adminstrasjon"
+                placeholder="••••••••"
                 autoFocus
                 autoComplete="off"
               />
